@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eyetracking-utils"
+version = "0.0.1"
+authors = [
+    { name="me", email="example@gmail.com" },
+]
+description = "Utils for eyetracking project"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/jadeddelta/eyetracking-utils"
+"Bug Tracker" = "https://github.com/jadeddelta/eyetracking-utils/issues"
