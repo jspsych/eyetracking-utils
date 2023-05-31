@@ -5,6 +5,15 @@ import tensorflow as tf
 
 
 def generate_single_ds(json_data):
+    """
+    Creates a tensorflow Dataset of the format (features, labels) to be used
+    for training a model. The features correspond to all landmarks, while the
+    labels correspond to the x, y position of the landmarks. This function will
+    convert all points in the json data into individual elements.
+
+    :param json_data: json of the shape given by our process_webm_to_json()
+    :return: A tf.data.Dataset that can be used for model.fit()
+    """
     inputs = []
     labels = []
 
@@ -25,6 +34,22 @@ def process_json_to_tfds(in_path: str,
                          val_split=0.1,
                          test_split=0.1,
                          verbose=True):
+    """
+    Processes a directory with only .json files into tensorflow datasets corresponding
+    to the desired proportions for training, validation, and testing based on number of
+    participants.
+
+    The proportions of data must add up to 1 and each dataset must have enough for 1
+    participant per dataset.
+
+    :param in_path: the directory containing the .json files
+    :param process: the processing function used for turning the json data into a tf dataset
+    :param train_split: the proportion of participants used for training data
+    :param val_split: the proportion of participants used for validation data
+    :param test_split: the proportion of participants used for test data
+    :param verbose: True if this function should print statements on which jsons are processed
+    :return: A tuple of tf.data.Dataset of the shape (train_ds, val_ds, test_ds)
+    """
     assert (train_split + val_split + test_split) == 1
 
     # gather lengths
@@ -78,6 +103,15 @@ def process_json_to_tfds(in_path: str,
 
 
 def process_one_file(in_path: str, file_name: str, process):
+    """
+    A helper function that opens and processes a file with a specified
+    processing function.
+
+    :param in_path: the directory of the .json file
+    :param file_name: the name of the file to be processed
+    :param process: the processing function
+    :return: The dataset returned by the processing function
+    """
     with open(in_path + file_name,) as file:
         data = json.load(file)
         j = data[file_name.split('.')[0]]
