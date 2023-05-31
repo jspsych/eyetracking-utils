@@ -95,9 +95,14 @@ def process_json_to_tfds(in_path: str,
     first_file = all_files.pop(0)
     test_ds = process_one_file(in_path, first_file, process)
     test_size -= 1
+    if verbose:
+        print("Test data:")
+        print(f'{first_file} processed')
     for i in range(test_size):
         file = all_files.pop(0)
         test_ds = test_ds.concatenate(process_one_file(in_path, file, process))
+        if verbose:
+            print(f'{file} processed')
 
     return train_ds, val_ds, test_ds
 
