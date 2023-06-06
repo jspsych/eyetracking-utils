@@ -167,3 +167,46 @@ def get_everything(path, face_mesh):
         "landmarks": out,
         "image": image
     }
+
+
+def get_everything_last_frame(path, face_mesh):
+    cap = cv2.VideoCapture(path)
+    frames = []
+    out = []
+    image = []
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if ret:
+            frames.append(frame)
+        else:
+            break
+
+    i = -1
+    while True:
+        try:
+            results = face_mesh.process(frames[i])
+        except:
+            print(path + " has no possible frames.")
+            return {
+                "landmarks": "NO FACES DETECTED",
+                "image": "NO FACES DETECTED"
+            }
+        if results.multi_face_landmarks is not None:
+            break
+        else:
+            i -= 1
+            print(path + " has a bad last frame. [Try " + str(-i) + "]")
+
+    landmarks = results.multi_face_landmarks[0].landmark
+    lm_arr = [[lm.x, lm.y, lm.z] for lm in landmarks]
+    out.append(lm_arr)
+    image.append(frames[-1].tolist())
+
+    size = len(out)
+    if size > 0:
+        out = np.reshape(np.array(out), (size, -1, 3)).tolist()
+    return {
+        "landmarks": out,
+        "image": image
+    }
