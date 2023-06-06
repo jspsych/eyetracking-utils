@@ -5,6 +5,8 @@ import fnmatch
 import json
 import mediapipe as mp
 
+from et_util.process_functions import getRightEye, getLeftEye
+
 
 def extract_mesh_from_video(path: str, mesh):
     cap = cv2.VideoCapture(path)
@@ -74,7 +76,8 @@ def process_webm_to_json(
             json.dump(all_data, file)
             if verbose:
                 print("Generated " + out_file)
-                
+
+
 def process_webm_to_json_modified(
         in_path: str,
         out_path: str,
@@ -86,16 +89,18 @@ def process_webm_to_json_modified(
     all_files = os.listdir(in_path)
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
+
     class NumpyEncoder(json.JSONEncoder):
-      """ Special json encoder for numpy types """
-      def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+        """ Special json encoder for numpy types """
+
+        def default(self, obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return json.JSONEncoder.default(self, obj)
 
     unique_subjects = set([fname.split('_')[0] for fname in all_files])
     for subject in unique_subjects:
@@ -123,10 +128,10 @@ def process_webm_to_json_modified(
             left = []
             right = []
             for i in range(0, len(mesh_features)):
-              cap = cv2.VideoCapture(video)
-              ret, frame = cap.read()
-              left.append(getLeftEye(frame, mesh_features[i]))
-              right.append(getRightEye(frame, mesh_features[i]))
+                cap = cv2.VideoCapture(video)
+                ret, frame = cap.read()
+                left.append(getLeftEye(frame, mesh_features[i]))
+                right.append(getRightEye(frame, mesh_features[i]))
             subject_data.append({
                 'block': block,
                 'phase': phase,
@@ -137,7 +142,7 @@ def process_webm_to_json_modified(
                 'right_eyes': right
             })
             if verbose: print("Processed point [" + x + ", " + y + "]")
-        
+
         all_data[subject] = subject_data
         dumped = json.dumps(all_data, cls=NumpyEncoder)
 

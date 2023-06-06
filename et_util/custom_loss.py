@@ -36,7 +36,7 @@ def normalized_weighted_euc_dist(y_true, y_pred):
     # Euclidean Distance from [0,0] to [177.8, 100] = 203.992
     norm_scale = tf.constant([203.992], dtype=tf.float32)
 
-    # Normalizes loss values to the diagonal- makes loss easier to interpret
+    # Normalizes loss values to the diagonal-- makes loss easier to interpret
     normalized_loss = tf.math.divide(loss, norm_scale) * 100
 
     return normalized_loss
