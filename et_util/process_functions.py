@@ -3,8 +3,6 @@ import json
 import cv2
 import mediapipe as mp
 
-from et_util.mp_processing import extract_mesh_from_video
-
 
 def getLeftEye(image, landmarks):
     """
@@ -49,7 +47,8 @@ def extract_eyes(json_path: str, webm_path: str):
   """
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
-    meshes = extract_mesh_from_video(webm_path, face_mesh)
+    # temp fix since this function isn't being used
+    meshes = []  # extract_mesh_from_video(webm_path, face_mesh)
     eyes = []
     i = 0
     for i in range(0, len(meshes)):
