@@ -44,15 +44,11 @@ def process_webm_to_json(
         subject_files = fnmatch.filter(all_files, subject + "*.webm")
 
         for fname in subject_files:
-            finfo = fname.replace('.', '_').split('_')
+            finfo = os.path.splitext(fname)[0].split('_')
             subject = finfo[0]
-            block = finfo[1]
-            phase = finfo[2]
-            x = finfo[3]
-            y = finfo[4]
+            x = finfo[1]
+            y = finfo[2]
             tag_json = {
-                'block': block,
-                'phase': phase,
                 'x': x,
                 'y': y
             }
