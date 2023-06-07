@@ -34,9 +34,9 @@ def process_webm_to_json(
         out_file = os.path.join(out_path, subject + '.json')
         if overwrite and os.path.exists(out_file):
             os.remove(out_file)
-            if verbose: print("Overwriting " + out_path)
+            if verbose: print("Overwriting " + out_file)
         if not overwrite and os.path.exists(out_file):
-            print(out_path + " already exists")
+            print(out_file + " already exists")
             continue
 
         all_data = {}
@@ -66,14 +66,13 @@ def process_webm_to_json(
 
         if not error:
             all_data[subject] = subject_data
+            with open(out_file, 'w') as file:
+                json.dump(all_data, file)
+            if verbose:
+                print("Generated " + out_file)
         if error and verbose:
             print("Above point has bad data, discarding.")
         error = False
-
-        with open(out_file, 'w') as file:
-            json.dump(all_data, file)
-            if verbose:
-                print("Generated " + out_file)
 
 
 def get_landmarks(path, face_mesh):
@@ -178,6 +177,13 @@ def get_everything(path, face_mesh):
 
 
 def get_everything_last_frame(path, face_mesh):
+    """
+    A process function that gets the last frame's MediaPipe facial landmarks and whole image data.
+
+    :param path: the path of the .webm video
+    :param face_mesh: the MediaPipe face mesh
+    :return: a .json containing an array with the last frame's facial landmarks and frame image data.
+    """
     cap = cv2.VideoCapture(path)
     frames = []
     out = []
@@ -210,6 +216,58 @@ def get_everything_last_frame(path, face_mesh):
     lm_arr = [[lm.x, lm.y, lm.z] for lm in landmarks]
     out.append(lm_arr)
     image.append(frames[-1].tolist())
+
+    size = len(out)
+    if size > 0:
+        out = np.reshape(np.array(out), (size, -1, 3)).tolist()
+    return {
+        "landmarks": out,
+        "image": image
+    }
+
+
+def get_everything_last_frame_gs(path, face_mesh):
+    """
+    A process function that gets the last frame's MediaPipe facial landmarks and whole image data in grayscale.
+
+    :param path: the path of the .webm video
+    :param face_mesh: the MediaPipe face mesh
+    :return: a .json containing an array with the last frame's facial landmarks and grayscale frame image data.
+    """
+    cap = cv2.VideoCapture(path)
+    frames = []
+    out = []
+    image = []
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if ret:
+            frames.append(frame)
+        else:
+            break
+
+    i = -1
+    while True:
+        try:
+            results = face_mesh.process(frames[i])
+        except:
+            print(path + " has no possible frames.")
+            return {
+                'error': 1
+            }
+        if results.multi_face_landmarks is not None:
+            break
+        else:
+            i -= 1
+            print(path + " has a bad last frame. [Try " + str(-i) + "]")
+
+    landmarks = results.multi_face_landmarks[0].landmark
+    lm_arr = [[lm.x, lm.y, lm.z] for lm in landmarks]
+    out.append(lm_arr)
+
+    last_image = frames[-1]
+    gs_image = cv2.cvtColor(last_image, cv2.COLOR_BGR2GRAY)
+    image.append(gs_image.tolist())
 
     size = len(out)
     if size > 0:
