@@ -24,6 +24,7 @@ def process_webm_to_json(
     :param overwrite: True if the files in the output directory should be overwritten
     :param verbose: True if print statements showing the processed points should be displayed
     """
+    error = False
     all_files = os.listdir(in_path)
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
@@ -56,11 +57,18 @@ def process_webm_to_json(
                 'y': y
             }
             data_json = process(in_path + fname, face_mesh)
+            if 'error' in data_json:
+                error = True
             tag_json.update(data_json)
             subject_data.append(tag_json)
-            if verbose: print("Processed point [" + x + ", " + y + "]")
+            if verbose:
+                print("Processed point [" + x + ", " + y + "]")
 
-        all_data[subject] = subject_data
+        if not error:
+            all_data[subject] = subject_data
+        if error and verbose:
+            print("Above point has bad data, discarding.")
+        error = False
 
         with open(out_file, 'w') as file:
             json.dump(all_data, file)
