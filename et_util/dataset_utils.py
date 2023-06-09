@@ -4,30 +4,6 @@ import os
 import tensorflow as tf
 
 
-def generate_single_ds(json_data):
-    """
-    Creates a tensorflow Dataset of the format (features, labels) to be used
-    for training a model. The features correspond to all landmarks, while the
-    labels correspond to the x, y position of the landmarks. This function will
-    convert all points in the json data into individual elements.
-
-    :param json_data: json of the shape given by our process_webm_to_json()
-    :return: A tf.data.Dataset that can be used for model.fit()
-    """
-    inputs = []
-    labels = []
-
-    for block in json_data:
-        for frame in block['features']:
-            inputs.append(frame)
-            labels.append([int(block['x']), int(block['y'])])
-
-    input_ds = tf.data.Dataset.from_tensor_slices(inputs)
-    label_ds = tf.data.Dataset.from_tensor_slices(labels)
-
-    return tf.data.Dataset.zip((input_ds, label_ds))
-
-
 def process_json_to_tfds(in_path: str,
                          process,
                          train_split=0.8,
@@ -105,6 +81,54 @@ def process_json_to_tfds(in_path: str,
             print(f'{file} processed')
 
     return train_ds, val_ds, test_ds
+
+
+def generate_single_ds(json_data):
+    """
+    Creates a tensorflow Dataset of the format (features, labels) to be used
+    for training a model. The features correspond to all landmarks, while the
+    labels correspond to the x, y position of the landmarks. This function will
+    convert all points in the json data into individual elements.
+
+    :param json_data: json of the shape given by our process_webm_to_json()
+    :return: A tf.data.Dataset that can be used for model.fit()
+    """
+    inputs = []
+    labels = []
+
+    for block in json_data:
+        for frame in block['features']:
+            inputs.append(frame)
+            labels.append([int(block['x']), int(block['y'])])
+
+    input_ds = tf.data.Dataset.from_tensor_slices(inputs)
+    label_ds = tf.data.Dataset.from_tensor_slices(labels)
+
+    return tf.data.Dataset.zip((input_ds, label_ds))
+
+
+def gen_everything_last_frame_gs(json_data):
+    """
+    Creates a tensorflow Dataset of the format {"images":, "landmarks":}, {"labels":}
+    for use in training a model.
+
+    :param json_data: json of the shape given by our process_webm_to_json()
+    :return: A tf.data.Dataset that can be used for model.fit()
+    """
+    landmarks = []
+    images = []
+    labels = []
+
+    for block in json_data:
+        landmarks.append(block['landmarks'][0])
+        images.append(block['image'][0])
+        labels.append([float(block['x']), float(block['y'])])
+
+    return tf.data.Dataset.from_tensor_slices(
+        (
+            {"images": images, "landmarks": landmarks}, {"labels": labels}
+        )
+    )
 
 
 def process_one_file(in_path: str, file_name: str, process):
