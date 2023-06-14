@@ -42,7 +42,7 @@ def plot_model_performance(dataset_size, test_data_size, num_points, dataset, pr
 
      plt.plot(x_values, y_values, linestyle="--", zorder=1, color=(0.8, 0.8, 0.8))
 
-     distance = np.array(loss.normalized_weighted_euc_dist([lx, ly], [px, py]))
+     distance = np.array(normalized_weighted_euc_dist([lx, ly], [px, py]))
      distances += [distance]
 
      plt.text(lx+2.0, ly+1.0, "D: {:0.2f}".format(distance[0]))
@@ -59,7 +59,7 @@ def plot_model_performance(dataset_size, test_data_size, num_points, dataset, pr
      predicted_points_x += [px]
      predicted_points_y += [py]
 
-     distance = np.array(loss.normalized_weighted_euc_dist(label, [px, py]))
+     distance = np.array(normalized_weighted_euc_dist(label, [px, py]))
      distances_all += [distance]
 
    avg_distance = np.mean(distances_all)
