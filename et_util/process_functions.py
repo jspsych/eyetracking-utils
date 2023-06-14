@@ -28,7 +28,7 @@ def getRightEye(image, landmarks):
   :param image: Image of face
   :param landmarks: Mesh of face
   """
-    eye_top = int(landmarks[263][1] * image.shape[0])
+    eye_top = int(landmarks[386][1] * image.shape[0])
     eye_left = int(landmarks[362][0] * image.shape[1])
     eye_bottom = int(landmarks[374][1] * image.shape[0])
     eye_right = int(landmarks[263][0] * image.shape[1])
