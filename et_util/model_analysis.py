@@ -5,16 +5,16 @@ import random
 
 from et_util.custom_loss import normalized_weighted_euc_dist
     
-def plot_model_performance(test_data_size, num_points, dataset, predictions):
+def plot_model_performance(dataset_size, test_data_size, num_points, dataset, predictions):
    """
    Plots performance of model and displays average distance and variance of predictions.
-
+    
+   :param dataset_size: size of dataset
    :param test_data_size: size of test data
    :param num_points: number of points to be plotted
    :param dataset: a non-shuffled, non-sliced dataset
    :param predictions: output of model based on test data
    """
-  dataset_size = dataset.cardinality().numpy()
   test_data = list(dataset.skip(dataset_size - test_data_size))
 
   plt.xlim(0,100)
