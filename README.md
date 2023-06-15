@@ -28,18 +28,18 @@ We start from a directory of jpg images uploaded from OSF. The images are the la
 First, make an empty directory where the TFRecord files will be stored. Then, run a function from the tfrecords_processing file, such as:
 
 ```python
-extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
+tfrecord_processing.extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
 ```
 
 The functions in the tfrecrods_processing file will output a directory of TFRecord files. There will be one file per subject containing all their data. 
 
-After that, you can create a TensorFlow dataset from the directory of TFRecord files. These functions come from the dataset_utils file.
+Using functions from the dataset_utils file, you can create TensorFlow datasets from the directory of TFRecord files:
 
 ```python
-train_data, validation_data, test_data = util.process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
+train_data, validation_data, test_data = dataset_utils.process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
 ```
 
-This line will create 3 TensorFlow datasets: training, validation, and testing data. You must use a processing function that matches the tfrecords_processing function you chose earlier. 
+This function will create 3 TensorFlow datasets: training, validation, and testing data. You must use a processing function that matches the tfrecords_processing function you chose earlier. 
 
 Lastly, before passing a TensorFlow dataset to a model, you must batch the dataset. 
 
