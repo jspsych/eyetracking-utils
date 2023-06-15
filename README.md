@@ -31,7 +31,7 @@ First, make an empty directory where the TFRecord files will be stored. Then, ru
 tfrecord_processing.extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
 ```
 
-The functions in the tfrecrods_processing file will output a directory of TFRecord files. There will be one file per subject containing all their data. 
+The functions in the tfrecrods_processing file will return a directory of TFRecord files. There will be one file per subject containing all their data. 
 
 Using functions from the dataset_utils file, you can create TensorFlow datasets from the directory of TFRecord files:
 
