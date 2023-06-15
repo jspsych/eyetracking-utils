@@ -36,12 +36,12 @@ This creates a directory of TFRecord files with one file per subject.
 Using functions from the `dataset_utils.py` file, you can create TensorFlow datasets from the directory of TFRecord files:
 
 ```python
-train_data, validation_data, test_data = process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
+train_data, validation_data, test_data = process_tfr_to_tfds(directory_path = path/to/tfrecords, process = parse_tfr_element_mediapipe)
 ```
 
-This function creates 3 TensorFlow datasets: training, validation, and testing data. Importantly, you must use a processing function that matches the tfrecords_processing function you chose earlier. 
+These functions require a process argument, which is a function that parses the TFRecords. The process function must match the `tfrecords_processing.py` function you chose earlier. You now have 3 TensorFlow datasets: training, validation, and testing data. 
 
-Lastly, before passing a TensorFlow dataset to a model, you must batch the dataset. 
+Before passing a TensorFlow dataset to a model, you must batch the dataset. 
 
 ```python
 train_data.batch(batch_size)
