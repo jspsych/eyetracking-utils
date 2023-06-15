@@ -25,21 +25,21 @@ This is how to create TensorFlow datasets using the eyetracking-utils package.
 
 We start from a directory of jpg images uploaded from OSF. The images are the last frame from each webm video recorded during the experiment.  
 
-First, make an empty directory where the TFRecord files will be stored. Then, run a function from the tfrecords_processing file, such as:
+First, make an empty directory where the TFRecord files will be stored. Then, run a function from the `tfrecords_processing.py` file, such as:
 
 ```python
-tfrecord_processing.extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
+extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
 ```
 
-The functions in the tfrecrods_processing file will return a directory of TFRecord files. There will be one file per subject containing all their data. 
+This will create a directory of TFRecord files with one file per subject. 
 
-Using functions from the dataset_utils file, you can create TensorFlow datasets from the directory of TFRecord files:
+Using functions from the `dataset_utils.py` file, you can create TensorFlow datasets from the directory of TFRecord files:
 
 ```python
-train_data, validation_data, test_data = dataset_utils.process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
+train_data, validation_data, test_data = process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
 ```
 
-This function will create 3 TensorFlow datasets: training, validation, and testing data. You must use a processing function that matches the tfrecords_processing function you chose earlier. 
+This function creates 3 TensorFlow datasets: training, validation, and testing data. Importantly, you must use a processing function that matches the tfrecords_processing function you chose earlier. 
 
 Lastly, before passing a TensorFlow dataset to a model, you must batch the dataset. 
 
