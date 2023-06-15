@@ -20,6 +20,38 @@ And access the functions with:
 ```python
 something.function()
 ```
+## Pipeline Guide
+This is how to create TensorFlow datasets using the eyetracking-utils package.
+
+The initial data is a directory of jpg images on your machine. The images are the last frame of the webm videos. 
+
+First, make an empty directory where the TFRecord files will be stored. 
+```python
+!mkdir tfrecords
+```
+
+Run a function from the tfrecords_processing file, such as:
+
+```python
+extract_meshes_to_tfrecords(in_path = path/to/jpg/directory, out_path = path/to/empty/directory)
+```
+
+The extract_meshes_to_tfrecords function retrieves Mediapipe face mesh data and stores each subject's data in one TFRecord file. 
+
+After that, you can create a TensorFlow dataset from the directory of TFRecord files. These functions come from the dataset_utils file.
+
+```python
+train_data, validation_data, test_data = util.process_tfr_to_tfds(directory_path = path/to/tfrecords, process = util.parse_tfr_element_mediapipe)
+```
+
+This line will create 3 TensorFlow datasets: training, validation, and testing data. You must use a processing function that matches the tfrecords_processing function you chose earlier.
+
+Before you pass a TensorFlow dataset to a model, the dataset must be batched:
+
+```python
+train_data.batch(batch_size)
+```
+
 
 ## Versioning
 Until we release our v1 of this project, we will use a separate 
