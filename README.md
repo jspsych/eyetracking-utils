@@ -23,7 +23,7 @@ something.function()
 ## Pipeline Guide
 This is how to create TensorFlow datasets using the eyetracking-utils package.
 
-We start from a directory a jpg images uploaded from OSF. The images are the last frame from each webm video recorded during the experiment.  
+We start from a directory of jpg images uploaded from OSF. The images are the last frame from each webm video recorded during the experiment.  
 
 First, make an empty directory where the TFRecord files will be stored. 
 ```python
