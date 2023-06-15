@@ -69,11 +69,11 @@ def process_jpg_to_tfrecords(
                 
                 if not error:
                     writer.write(example.SerializeToString())
-                    if verbose:
-                        print("Generated " + id + ".tfrecords")
                 if error and verbose:
                     print("Above point has bad data, discarding.")
                 error = False
+            if verbose:
+                print("Generated " + id + ".tfrecords")
             writer.close()
 
 def define_single_example_mediapipe(image):
