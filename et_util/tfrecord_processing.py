@@ -44,10 +44,6 @@ def process_jpg_to_tfrecords(
             for fname in subject_files:
                 finfo = fname.rsplit('.', 1)[0].split("_")
                 image_path = os.path.join(in_path, fname)
-                image = cv2.imread(image_path)
-                if image is None:
-                    print(f"{fname} cannot be read")
-                    continue 
 
                 id = finfo[0]
                 x, y = finfo[1], finfo[2]
@@ -58,7 +54,7 @@ def process_jpg_to_tfrecords(
                     'y': tf.train.Feature(float_list=tf.train.FloatList(value=[float(y)]))
                 }
 
-                data = process(image)
+                data = process(image_path)
                 if 'error' in data:
                     error = True
                 tag.update(data)
@@ -76,12 +72,16 @@ def process_jpg_to_tfrecords(
                 print("Generated " + id + ".tfrecords")
             writer.close()
 
-def define_single_example_mediapipe(image):
+def define_single_example_mediapipe(image_path):
     """Helper process function for process_jpg_to_tfrecords that defines an example with subject id, x and y coords, 
     and mediapipe facemesh landmarks
     
-    :param image: image file"""
+    :param image_path: path of image file"""
 
+    image = cv2.imread(image_path)
+    if image is None:
+      return 'error'
+            
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
     results = face_mesh.process(image)
