@@ -206,14 +206,13 @@ def parse_tfr_element_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for get_dataset function.
     Gets raw image, image height, image width, subject id, and xy labels. 
     """
-    
     data_structure = {
-    'height': tf.io.FixedLenFeature([], tf.int64),
-    'width':tf.io.FixedLenFeature([], tf.int64),
-    'x':tf.io.FixedLenFeature([], tf.float32),
-    'y':tf.io.FixedLenFeature([], tf.float32),
-    'raw_image' : tf.io.FixedLenFeature([], tf.string),
-    'subject_id':tf.io.FixedLenFeature([], tf.int64),
+      'height': tf.io.FixedLenFeature([], tf.int64),
+      'width':tf.io.FixedLenFeature([], tf.int64),
+      'x':tf.io.FixedLenFeature([], tf.float32),
+      'y':tf.io.FixedLenFeature([], tf.float32),
+      'raw_image' : tf.io.FixedLenFeature([], tf.string),
+      'subject_id':tf.io.FixedLenFeature([], tf.int64),
     }
 
     content = tf.io.parse_single_example(element, data_structure)
