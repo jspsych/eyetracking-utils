@@ -201,10 +201,9 @@ def parse_tfr_element_mediapipe(element):
     feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     feature = tf.reshape(feature, shape=(478, 3))
     return (feature, label)
-  
- def parse_tfr_element_jpg(element):
-    """Process function that parses a tfr element in a raw dataset for get_dataset function.
-    Gets raw image, image height, image width, subject id, and xy labels."""
+ 
+def parse_tfr_element(element):
+    """Process function that parses a tfr element in a raw dataset for get_dataset function. Gets raw image, image height, image width, subject id, and xy labels.""" 
     
     data_structure = {
       'height': tf.io.FixedLenFeature([], tf.int64),
@@ -214,7 +213,7 @@ def parse_tfr_element_mediapipe(element):
       'raw_image' : tf.io.FixedLenFeature([], tf.string),
       'subject_id':tf.io.FixedLenFeature([], tf.int64),
     }
-
+    
     content = tf.io.parse_single_example(element, data_structure)
 
     raw_image = content['raw_image']
@@ -224,7 +223,6 @@ def parse_tfr_element_mediapipe(element):
     label = [content['x'], content['y']]
     subject_id = content['subject_id']
 
-    #get our 'feature'-- our image -- and reshape it appropriately
     image = tf.io.decode_jpeg(raw_image)
     image = tf.reshape(image, shape=(640, 480, 3))
 
