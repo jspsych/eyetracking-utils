@@ -146,3 +146,58 @@ def process_one_file(in_path: str, file_name: str, process):
         j = data[file_name.split('.')[0]]
 
     return process(j)
+
+def process_tfr_to_tfds(directory_path,
+                        process, 
+                        train_split=0.8, 
+                        val_split=0.1, 
+                        test_split=0.1):
+    """"Creates a parsed tensorflow dataset from a directory of tfrecords files with specified
+    training, validation and test split.
+
+    The proportions of data must add up to one.
+
+    :param directory_path: Path of directory containing tfrecords files. Make sure to include / at end.
+    :param process: Function that parses raw dataset based on shape (i.e. for mediapipe data, use 
+    parse_tfr_element_mediapipe)
+    :return: Parsed tensorflow dataset split into training, validation and test data
+    """
+    assert (train_split + val_split + test_split) == 1
+
+    files_arr = os.listdir(directory_path)
+    file_paths = [directory_path + file_name for file_name in files_arr]
+
+    dataset = tf.data.TFRecordDataset(file_paths)
+    dataset = dataset.map(process)
+    
+    ds_size = 0
+    for element in dataset:
+        ds_size += 1
+
+    train_size = int(train_split * ds_size)
+    val_size = int(val_split * ds_size)
+
+    train_ds = dataset.take(train_size)
+    val_ds = dataset.skip(train_size).take(val_size)
+    test_ds = dataset.skip(train_size).skip(val_size)
+
+    return train_ds, val_ds, test_ds
+
+def parse_tfr_element_mediapipe(element):
+    """Process function that parses a tfr element in a raw dataset for get_dataset function.
+    Gets x and y coordinates as label and mediapipe landmarks."""
+    data = {
+    'x':tf.io.FixedLenFeature([], tf.float32),
+    'y':tf.io.FixedLenFeature([], tf.float32),
+    'landmarks':tf.io.FixedLenFeature([], tf.string)
+    }
+
+        
+    content = tf.io.parse_single_example(element, data)
+        
+    label = [content['x'], content['y']]
+    landmarks = content['landmarks']
+        
+    feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
+    feature = tf.reshape(feature, shape=(478, 3))
+    return (feature, label)
