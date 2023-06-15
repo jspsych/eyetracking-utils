@@ -39,7 +39,7 @@ Using functions from the `dataset_utils.py` file, you can create TensorFlow data
 train_data, validation_data, test_data = process_tfr_to_tfds(directory_path = path/to/tfrecords, process = parse_tfr_element_mediapipe)
 ```
 
-These functions require a process argument, which is a function that parses the TFRecords. The process function must match the 'tfrecords_processing.py' function you chose earlier. You now have 3 TensorFlow datasets: training, validation, and testing data. 
+These functions require a process argument, which is a function that parses the TFRecords. The process function must match the `tfrecords_processing.py` function you chose earlier. You now have 3 TensorFlow datasets: training, validation, and testing data. 
 
 Before passing a TensorFlow dataset to a model, you must batch the dataset. 
 
