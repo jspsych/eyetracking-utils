@@ -1,3 +1,4 @@
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
