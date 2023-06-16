@@ -131,6 +131,29 @@ def gen_everything_last_frame_gs(json_data):
     )
 
 
+def gen_eye_data(json_data):
+    """
+    Creates a tensorflow Dataset of the format {"left":, "right":}, {"labels":}
+    for use in training a model.
+
+    :param json_data: json of the shape given by our process_webm_to_json()
+    :return: A tf.data.Dataset that can be used for model.fit()
+    """
+    left = []
+    right = []
+    labels = []
+    for block in json_data:
+        left.append(block['left'])
+        right.append(block['right'])
+        labels.append([float(block['x']), float(block['y'])])
+
+    return tf.data.Dataset.from_tensor_slices(
+        (
+            {"left": left, "right": right}, {"labels": labels}
+        )
+    )
+
+
 def process_one_file(in_path: str, file_name: str, process):
     """
     A helper function that opens and processes a file with a specified
@@ -141,7 +164,7 @@ def process_one_file(in_path: str, file_name: str, process):
     :param process: the processing function
     :return: The dataset returned by the processing function
     """
-    with open(in_path + file_name,) as file:
+    with open(in_path + file_name, ) as file:
         data = json.load(file)
         j = data[file_name.split('.')[0]]
 
@@ -149,12 +172,13 @@ def process_one_file(in_path: str, file_name: str, process):
 
 
 def process_tfr_to_tfds(directory_path,
-                process, 
-                train_split=0.8, 
-                val_split=0.1, 
-                test_split=0.1):
-    """Creates a parsed tensorflow dataset from a directory of tfrecords
-    files
+                        process,
+                        train_split=0.8,
+                        val_split=0.1,
+                        test_split=0.1):
+    """
+    Creates a parsed tensorflow dataset from a directory of tfrecords
+    files.
 
     :param directory_path: path of directory containing tfrecords files. 
     Make sure to include / at end.
@@ -168,7 +192,7 @@ def process_tfr_to_tfds(directory_path,
 
     dataset = tf.data.TFRecordDataset(file_paths)
     dataset = dataset.map(process)
-    
+
     ds_size = 0
     for element in dataset:
         ds_size += 1
@@ -181,6 +205,7 @@ def process_tfr_to_tfds(directory_path,
     test_ds = dataset.skip(train_size).skip(val_size)
 
     return train_ds, val_ds, test_ds
+
 
 def parse_tfr_element_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for 
@@ -198,11 +223,11 @@ def parse_tfr_element_mediapipe(element):
     }
 
     content = tf.io.parse_single_example(element, data)
-        
+
     subject_id = content['subject_id']
     label = [content['x'], content['y']]
     landmarks = content['landmarks']
-        
+
     feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     feature = tf.reshape(feature, shape=(478, 3))
     return feature, label, subject_id
@@ -214,16 +239,16 @@ def parse_tfr_element(element):
     get_dataset function. Gets raw image, image height, image width,
     subject id, and xy labels.
     """
-    
+
     data_structure = {
-      'height': tf.io.FixedLenFeature([], tf.int64),
-      'width': tf.io.FixedLenFeature([], tf.int64),
-      'x': tf.io.FixedLenFeature([], tf.float32),
-      'y': tf.io.FixedLenFeature([], tf.float32),
-      'raw_image': tf.io.FixedLenFeature([], tf.string),
-      'subject_id': tf.io.FixedLenFeature([], tf.int64),
+        'height': tf.io.FixedLenFeature([], tf.int64),
+        'width': tf.io.FixedLenFeature([], tf.int64),
+        'x': tf.io.FixedLenFeature([], tf.float32),
+        'y': tf.io.FixedLenFeature([], tf.float32),
+        'raw_image': tf.io.FixedLenFeature([], tf.string),
+        'subject_id': tf.io.FixedLenFeature([], tf.int64),
     }
-    
+
     content = tf.io.parse_single_example(element, data_structure)
 
     raw_image = content['raw_image']
