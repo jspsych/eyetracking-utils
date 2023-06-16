@@ -12,10 +12,10 @@ def getLeftEye(image, landmarks):
   :param image: Image of face
   :param landmarks: Mesh of face
   """
-    eye_top = int(landmarks[159][1] * image.shape[0])
-    eye_left = int(landmarks[33][0] * image.shape[1])
-    eye_bottom = int(landmarks[145][1] * image.shape[0])
-    eye_right = int(landmarks[133][0] * image.shape[1])
+    eye_top = int(landmarks[27][1] * image.shape[0])
+    eye_left = int(landmarks[226][0] * image.shape[1])
+    eye_bottom = int(landmarks[23][1] * image.shape[0])
+    eye_right = int(landmarks[244][0] * image.shape[1])
     left_eye = image[eye_top:eye_bottom, eye_left:eye_right]
     return left_eye
 
@@ -28,10 +28,10 @@ def getRightEye(image, landmarks):
   :param image: Image of face
   :param landmarks: Mesh of face
   """
-    eye_top = int(landmarks[386][1] * image.shape[0])
-    eye_left = int(landmarks[362][0] * image.shape[1])
-    eye_bottom = int(landmarks[374][1] * image.shape[0])
-    eye_right = int(landmarks[263][0] * image.shape[1])
+    eye_top = int(landmarks[257][1] * image.shape[0])
+    eye_left = int(landmarks[464][0] * image.shape[1])
+    eye_bottom = int(landmarks[253][1] * image.shape[0])
+    eye_right = int(landmarks[446][0] * image.shape[1])
     right_eye = image[eye_top:eye_bottom, eye_left:eye_right]
     return right_eye
 
