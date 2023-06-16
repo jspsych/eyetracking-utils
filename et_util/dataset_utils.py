@@ -148,19 +148,17 @@ def process_one_file(in_path: str, file_name: str, process):
     return process(j)
 
 def process_tfr_to_tfds(directory_path,
-                        process, 
-                        train_split=0.8, 
-                        val_split=0.1, 
-                        test_split=0.1):
-    """"Creates a parsed tensorflow dataset from a directory of tfrecords files with specified
-    training, validation and test split.
+                process, 
+                train_split=0.8, 
+                val_split=0.1, 
+                test_split=0.1):
+    """"Creates a parsed tensorflow dataset from a directory of tfrecords 
+    files
 
-    The proportions of data must add up to one.
-
-    :param directory_path: Path of directory containing tfrecords files. Make sure to include / at end.
-    :param process: Function that parses raw dataset based on shape (i.e. for mediapipe data, use 
-    parse_tfr_element_mediapipe)
-    :return: Parsed tensorflow dataset split into training, validation and test data
+    :param directory_path: path of directory containing tfrecords files. 
+    Make sure to include / at end.
+    :param process: process function that corresponds to shape of data
+    :return: parsed tensorflow dataset
     """
     assert (train_split + val_split + test_split) == 1
 
@@ -184,23 +182,29 @@ def process_tfr_to_tfds(directory_path,
     return train_ds, val_ds, test_ds
 
 def parse_tfr_element_mediapipe(element):
-    """Process function that parses a tfr element in a raw dataset for get_dataset function.
-    Gets x and y coordinates as label and mediapipe landmarks."""
+    """Process function that parses a tfr element in a raw dataset for 
+    get_dataset function.
+    Gets subject id as unique integer, x and y coordinates as label and 
+    mediapipe landmarks.
+    Use for data generated with make_single_example_mediapipe.
+    :param element: tfr element in raw dataset
+    :return: subject_id, landmarks, label(x, y)"""
     data = {
+    'subject_id':tf.io.FixedLenFeature([], tf.int64),
     'x':tf.io.FixedLenFeature([], tf.float32),
     'y':tf.io.FixedLenFeature([], tf.float32),
     'landmarks':tf.io.FixedLenFeature([], tf.string)
     }
 
-        
     content = tf.io.parse_single_example(element, data)
         
+    id = content['subject_id']
     label = [content['x'], content['y']]
     landmarks = content['landmarks']
         
     feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     feature = tf.reshape(feature, shape=(478, 3))
-    return (feature, label)
+    return (id, feature, label)
  
 def parse_tfr_element(element):
     """Process function that parses a tfr element in a raw dataset for get_dataset function. Gets raw image, image height, image width, subject id, and xy labels.""" 
