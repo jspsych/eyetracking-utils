@@ -198,13 +198,13 @@ def parse_tfr_element_mediapipe(element):
 
     content = tf.io.parse_single_example(element, data)
         
-    id = content['subject_id']
+    subject_id = content['subject_id']
     label = [content['x'], content['y']]
     landmarks = content['landmarks']
         
     feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     feature = tf.reshape(feature, shape=(478, 3))
-    return (id, feature, label)
+    return (feature, label, subject_id)
  
 def parse_tfr_element(element):
     """Process function that parses a tfr element in a raw dataset for get_dataset function. Gets raw image, image height, image width, subject id, and xy labels.""" 
