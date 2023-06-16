@@ -4,14 +4,14 @@ import cv2
 import fnmatch
 import mediapipe as mp
 
-def process_jpg_to_tfrecords(
+def process_jpg_to_tfr(
         in_path: str, 
         out_path: str,
         process,
         overwrite=True,
         verbose=True):
     """Processes jpeg files in a directory to tfrecord files
-    in a specified out path
+    in a specified directory
 
     :param in_path: directory of jpeg files
     :param out_path: directory where tfrecord files will go
@@ -54,39 +54,45 @@ def process_jpg_to_tfrecords(
                     'y': tf.train.Feature(float_list=tf.train.FloatList(value=[float(y)]))
                 }
 
-                data = process(image_path)
+                data = process(image_path, face_mesh)
                 if 'error' in data:
                     error = True
-                tag.update(data)
-                example = tf.train.Example(features=tf.train.Features(feature=tag))
-                
+
                 if verbose:
                     print(f"Processed point [{x}, {y}]")
                 
-                if not error:
-                    writer.write(example.SerializeToString())
                 if error and verbose:
                     print("Above point has bad data, discarding.")
-                error = False
+                    error = False
+                    continue
+                
+                tag.update(data)
+                example = tf.train.Example(features=tf.train.Features(feature=tag))
+                
+                writer.write(example.SerializeToString())
             if verbose:
                 print("Generated " + id + ".tfrecords")
+            error = False
             writer.close()
 
-def define_single_example_mediapipe(image_path):
-    """Helper process function for process_jpg_to_tfrecords that defines an example with subject id, x and y coords, 
-    and mediapipe facemesh landmarks
+def make_single_example_mediapipe(image_path, face_mesh):
+    """Helper process function for process_jpg_to_tfr that 
+    defines an example with mediapipe facemesh landmarks
     
-    :param image_path: path of image file"""
+    :param image_path: path of image file
+    :param face_mesh: mediapipe face mesh that generates landmarks 
+    for face"""
 
     image = cv2.imread(image_path)
     if image is None:
+      print("Cannot read image")
       return 'error'
             
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
+    
     results = face_mesh.process(image)
     if not results.multi_face_landmarks:
-        return 'error'
+      print("Cannot make mesh")
+      return 'error'
     
     landmarks = results.multi_face_landmarks[0].landmark
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
