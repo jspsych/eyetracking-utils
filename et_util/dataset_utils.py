@@ -147,12 +147,13 @@ def process_one_file(in_path: str, file_name: str, process):
 
     return process(j)
 
+
 def process_tfr_to_tfds(directory_path,
                 process, 
                 train_split=0.8, 
                 val_split=0.1, 
                 test_split=0.1):
-    """"Creates a parsed tensorflow dataset from a directory of tfrecords 
+    """Creates a parsed tensorflow dataset from a directory of tfrecords
     files
 
     :param directory_path: path of directory containing tfrecords files. 
@@ -190,10 +191,10 @@ def parse_tfr_element_mediapipe(element):
     :param element: tfr element in raw dataset
     :return: subject_id, landmarks, label(x, y)"""
     data = {
-    'subject_id':tf.io.FixedLenFeature([], tf.int64),
-    'x':tf.io.FixedLenFeature([], tf.float32),
-    'y':tf.io.FixedLenFeature([], tf.float32),
-    'landmarks':tf.io.FixedLenFeature([], tf.string)
+        'subject_id': tf.io.FixedLenFeature([], tf.int64),
+        'x': tf.io.FixedLenFeature([], tf.float32),
+        'y': tf.io.FixedLenFeature([], tf.float32),
+        'landmarks': tf.io.FixedLenFeature([], tf.string)
     }
 
     content = tf.io.parse_single_example(element, data)
@@ -204,18 +205,23 @@ def parse_tfr_element_mediapipe(element):
         
     feature = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     feature = tf.reshape(feature, shape=(478, 3))
-    return (feature, label, subject_id)
- 
+    return feature, label, subject_id
+
+
 def parse_tfr_element(element):
-    """Process function that parses a tfr element in a raw dataset for get_dataset function. Gets raw image, image height, image width, subject id, and xy labels.""" 
+    """
+    Process function that parses a tfr element in a raw dataset for
+    get_dataset function. Gets raw image, image height, image width,
+    subject id, and xy labels.
+    """
     
     data_structure = {
       'height': tf.io.FixedLenFeature([], tf.int64),
-      'width':tf.io.FixedLenFeature([], tf.int64),
-      'x':tf.io.FixedLenFeature([], tf.float32),
-      'y':tf.io.FixedLenFeature([], tf.float32),
-      'raw_image' : tf.io.FixedLenFeature([], tf.string),
-      'subject_id':tf.io.FixedLenFeature([], tf.int64),
+      'width': tf.io.FixedLenFeature([], tf.int64),
+      'x': tf.io.FixedLenFeature([], tf.float32),
+      'y': tf.io.FixedLenFeature([], tf.float32),
+      'raw_image': tf.io.FixedLenFeature([], tf.string),
+      'subject_id': tf.io.FixedLenFeature([], tf.int64),
     }
     
     content = tf.io.parse_single_example(element, data_structure)
@@ -230,4 +236,4 @@ def parse_tfr_element(element):
     image = tf.io.decode_jpeg(raw_image)
     image = tf.reshape(image, shape=(640, 480, 3))
 
-    return (image, label, subject_id)
+    return image, label, subject_id
