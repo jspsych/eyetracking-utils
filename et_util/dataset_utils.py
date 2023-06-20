@@ -233,11 +233,9 @@ def parse_tfr_element_mediapipe(element):
     return feature, label, subject_id
 
 
-def parse_tfr_element(element):
-    """
-    Process function that parses a tfr element in a raw dataset for
-    get_dataset function. Gets raw image, image height, image width,
-    subject id, and xy labels.
+def parse_tfr_element_jpg(element):
+    """Process function that parses a tfr element in a raw dataset for get_dataset function. 
+    Gets raw image, image height, image width, subject id, and xy labels.
     """
 
     data_structure = {
