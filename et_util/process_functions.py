@@ -70,9 +70,9 @@ def get_last_valid_frame(file_path: str, face_mesh):
             results = face_mesh.process(frames[i])
         except:
             print(os.path.basename(file_path) + " has no possible frames.")
-            return -1
+            return False, 0
         if results.multi_face_landmarks is not None:
-            return results.multi_face_landmarks[0].landmark
+            return True, results.multi_face_landmarks[0].landmark
         else:
             i -= 1
             print(os.path.basename(file_path) + " has a bad last frame. [Try " + str(-i) + "]")
