@@ -102,9 +102,9 @@ def make_single_example_mediapipe(image_path, face_mesh):
     return {'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()]))}
        
 def make_single_example_jpg(image_path, face_mesh):
-  """Converts a directory of jpg files to a directory of TFRecord files with one file per unique subject. In addition to subject id and labels, TFRecord files include image height, image width, and raw image array.
+  """Converts a directory of jpg files to a directory of TFRecord files with one file per unique subject. In addition to subject id and labels, TFRecord files include image width, image height, and raw image array.
 
-  :param image_path: directory of jpeg files.
+  :param image_path: directory of jpeg files
   :param face_mesh: empty variable needed to integrate with process_jpg_to_tfr
   """
 
@@ -116,15 +116,15 @@ def make_single_example_jpg(image_path, face_mesh):
 
   # Feature description of image to use when parsing
   feature_description = {
-    'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
     'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
+    'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
     'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
   }
 
   return feature_description
 
 def remove_subject_tfrecords(directory, subject_ids):
-  """Helper function that removes TFRecords files based on a list of subject ids. 
+  """Function that removes TFRecords files based on a list of subject ids. 
 
   :param directory: directory with TFRecord files to be filtered
   :param subject_ids: list of subject ids
