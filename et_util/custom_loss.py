@@ -3,19 +3,15 @@ import os
 import numpy as np
 
 
-"""Defines a custom loss function that calculates a weighted Euclidean distance between two sets of points. 
+"""Custom loss function that calculates a weighted Euclidean distance between two sets of points. 
 
-The units of the points is originally percentage of the screen, but those scales are different between the x and y axes. 
-The weighting multiplies the x-coordinate of each input by 1.778 (derived from the 16:9 aspect ratio of most laptops) to match the scale of the y-axis. 
-Finally, to retain interpretability, the distances are normalized to the diagonal such that the maximum distance between two points (corner to corner) is 100. 
-A normalized_loss value of 50 would be equal to the distance from a corner to the center of the screen. 
+Weighting multiplies the x-coordinate of each input by 1.778 (derived from the 16:9 aspect ratio of most laptops) to match the scale of the y-axis. 
+For interpretability, the distances are normalized to the diagonal such that the maximum distance between two points (corner to corner) is 100. 
 
-Parameters:
-y_true (tensor): A tensor of shape (2,) containing ground-truth x- and y- coordinates
-y_pred (tensor): - A tensor of shape (2,) containing predicted x- and y- coordinates
+:param y_true (tensor): A tensor of shape (2,) containing ground-truth x- and y- coordinates
+:param y_pred (tensor): A tensor of shape (2,) containing predicted x- and y- coordinates
 
-Returns:
-Tensor:A tensor of shape (1,) with the weighted and normalized euclidean distances between the points in y_true and y_pred. 
+:returns: A tensor of shape (1,) with the weighted and normalized euclidean distances between the points in y_true and y_pred. 
 """
 
 
