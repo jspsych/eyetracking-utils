@@ -12,6 +12,12 @@ If you *ever* make changes to the code, make sure to increment the
 version in `pyproject.toml`. Otherwise, the changes will not update 
 when you rerun the pip command.
 
+Note: Changing from branch to branch (i.e. main to dev branch) will not 
+update the module in your notebook environment, you'll have to do a complete
+wipe and restart of the environment in order for changes in the code to 
+be reflected, but once done, sticking on that one branch and updating will
+still work.
+
 To import various files, just use:
 ```python
 import et_util.filename as something 
