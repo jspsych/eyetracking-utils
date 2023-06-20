@@ -234,8 +234,11 @@ def parse_tfr_element_mediapipe(element):
 
 
 def parse_tfr_element_jpg(element):
-    """Process function that parses a tfr element in a raw dataset for get_dataset function. 
+    """Process function that parses a tfr element in a raw dataset for get_dataset function.
     Gets raw image, image height, image width, subject id, and xy labels.
+
+    :param tfr element in raw dataset
+    :return raw image, label, subject_id
     """
 
     data_structure = {
@@ -257,6 +260,6 @@ def parse_tfr_element_jpg(element):
     subject_id = content['subject_id']
 
     image = tf.io.decode_jpeg(raw_image)
-    image = tf.reshape(image, shape=(640, 480, 3))
+    image = tf.reshape(image, shape=(height, width, depth))
 
     return image, label, subject_id
