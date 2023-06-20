@@ -89,8 +89,18 @@ def plot_model_performance(num_points, test_data, predictions, function):
 
 def gen_test_arr_landmarks(test_data):
   """Helper function for plot_model_performance that generates
-  array of test points from test data in format landmarks, label
+  array of test points from test data in format landmarks, label,
+  subject_id.
   :param test_data:
   :return: array of test points"""
-  arr = [label for landmarks, label in test_data]
+  arr = [label for landmarks, label, subject_id in test_data]
   return arr
+
+def gen_test_arr_images(test_data):
+    """Helper function for plot_model_performance that generates
+    array of test points from test data in format image, lable,
+    subject_id.
+    :param test_data:
+    :return: array of test points"""
+    arr = [label for landmarks, label, subject_id in test_data]
+    return arr
