@@ -102,9 +102,9 @@ def make_single_example_mediapipe(image_path, face_mesh):
     return {'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()]))}
        
 def make_single_example_image(image_path, face_mesh):
-  """Converts a directory of jpeg files to a directory of TFRecord files with one file per unique subject id. In addition to subject id and labels, TFRecord files include image height, image width, and raw image array. 
+  """Converts a directory of jpg files to a directory of TFRecord files with one file per unique subject. In addition to subject id and labels, TFRecord files include image height, image width, and raw image array.
 
-  :param image_path: directory of jpeg files. 
+  :param image_path: directory of jpeg files.
   :param face_mesh: empty variable needed to integrate with process_jpg_to_tfr
   """
 
