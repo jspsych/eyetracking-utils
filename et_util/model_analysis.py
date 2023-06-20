@@ -3,7 +3,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 import random
 
-from custom_loss import normalized_weighted_euc_dist
+from et_util.custom_loss import normalized_weighted_euc_dist
     
 def plot_model_performance(num_points, test_data, predictions):
    """
