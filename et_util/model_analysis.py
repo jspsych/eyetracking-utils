@@ -1,30 +1,9 @@
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 import random
 
-def normalized_weighted_euc_dist(y_true, y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-
-    # Weighting treats y-axis as unit-scale and creates a rectangle that's 177.8x100 units.  
-    x_weight = tf.constant([1.778, 1.0], dtype=tf.float32)
-
-    # Multiply x-coordinate by 16/9 = 1.778
-    y_true_weighted = tf.math.multiply(x_weight, y_true)
-    y_pred_weighted = tf.math.multiply(x_weight, y_pred)
-
-    # Calculate Euclidean distance with weighted coordinates
-    loss = tf.math.sqrt(tf.math.reduce_sum(tf.math.square(y_pred_weighted - y_true_weighted), axis=-1))
-
-    # Euclidean Distance from [0,0] to [177.8, 100] = 203.992
-    norm_scale = tf.constant([203.992], dtype=tf.float32)
-
-    # Normalizes loss values to the diagonal-- makes loss easier to interpret
-    normalized_loss = tf.math.divide(loss, norm_scale) * 100
-
-    return normalized_loss
+from custom_loss import normalized_weighted_euc_dist
     
 def plot_model_performance(num_points, test_data, predictions, function):
    """
