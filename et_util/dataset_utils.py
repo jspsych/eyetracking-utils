@@ -184,7 +184,7 @@ def process_tfr_to_tfds(directory_path,
     :param directory_path: path of directory containing tfrecords files. 
     Make sure to include / at end.
     :param process: process function that corresponds to shape of data
-    :param filter_imgs: True if images should all be of shape=(480,640,3), False otherwise
+    :param filter_imgs: True if images should all be of shape=(640,480,3), False otherwise
     :return: parsed tensorflow dataset
     """
     assert (train_split + val_split + test_split) == 1
@@ -195,8 +195,8 @@ def process_tfr_to_tfds(directory_path,
     dataset = tf.data.TFRecordDataset(file_paths)
     dataset = dataset.map(process)
     if filter_imgs == True:
-      dataset = dataset.filter(filter_img_dims)
-      dataset = dataset.map(lambda element, label, subject_id: (tf.reshape(element, (480, 640, 3)), label, subject_id))
+      dataset = dataset.filter(lambda image, label, id: tf.math.reduce_all(tf.math.equal(tf.shape(image), (640, 480, 3))))
+      dataset = dataset.map(lambda image, label, id: (tf.reshape(image, (640, 480, 3)), label, id))
   
     ds_size = 0
     for element in dataset:
@@ -239,17 +239,16 @@ def parse_tfr_element_mediapipe(element):
 
 
 def parse_tfr_element_jpg(element):
-    """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds.
-    Gets raw image, image height, image width, subject id, and xy-coordinate labels.
-    Use for data generated with make_single_example_jpg.
+    """Process function that parses a tfr element in a raw dataset for get_dataset function.
+    Gets raw image, image width, image height, subject id, and xy labels.
 
-    :param tfr element in raw dataset
-    :return raw image, label(x, y), subject_id
+    :param element: tfr element in raw dataset
+    :return: raw image with shape
     """
 
     data_structure = {
-        'height': tf.io.FixedLenFeature([], tf.int64),
         'width': tf.io.FixedLenFeature([], tf.int64),
+        'height': tf.io.FixedLenFeature([], tf.int64),
         'x': tf.io.FixedLenFeature([], tf.float32),
         'y': tf.io.FixedLenFeature([], tf.float32),
         'raw_image': tf.io.FixedLenFeature([], tf.string),
@@ -259,21 +258,13 @@ def parse_tfr_element_jpg(element):
     content = tf.io.parse_single_example(element, data_structure)
 
     raw_image = content['raw_image']
-    height = content['height']
     width = content['width']
+    height = content['height']
     depth = 3
     label = [content['x'], content['y']]
     subject_id = content['subject_id']
 
     image = tf.io.decode_jpeg(raw_image)
-    image = tf.reshape(image, shape=(height, width, depth))
+    image = tf.reshape(image, shape=(width, height, depth))
 
     return image, label, subject_id
-
-
-def filter_img_dims(image, label, subject_id):
-  """Helper function for process_tfr_to_tfds which filters out any images that do not have shape=(480,640, 3)."""
-  if (tf.math.reduce_any(tf.math.not_equal(tf.shape(image), [480, 640, 3]))):
-    return False
-  else:
-    return True
