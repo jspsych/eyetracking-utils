@@ -122,3 +122,17 @@ def make_single_example_jpg(image_path, face_mesh):
   }
 
   return feature_description
+
+def remove_subject_tfrecords(directory, subject_ids):
+  """Helper function that removes TFRecords files based on a list of subject ids. 
+
+  :param directory: directory with TFRecord files to be filtered
+  :param subject_ids: list of subject ids
+  """
+
+  filenames = [subject_id + '.tfrecords' for subject_id in subject_ids]
+  for filename in os.listdir(directory):
+      if filename in filenames:
+          file_path = os.path.join(directory, filename)
+          os.remove(file_path)
+          print(f"Removed file: {file_path}")
