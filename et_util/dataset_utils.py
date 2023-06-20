@@ -236,7 +236,7 @@ def parse_tfr_element_mediapipe(element):
 def parse_tfr_element_jpg(element):
     """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds.
     Gets raw image, image height, image width, subject id, and xy-coordinate labels.
-    Use for data generated with make_single_example_image.
+    Use for data generated with make_single_example_jpg.
 
     :param tfr element in raw dataset
     :return raw image, label(x, y), subject_id
