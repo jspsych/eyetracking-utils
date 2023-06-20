@@ -60,9 +60,10 @@ def process_jpg_to_tfr(
 
                 if verbose:
                     print(f"Processed point [{x}, {y}]")
+                    if error:
+                        print("Above point has bad data, discarding.")
                 
-                if error and verbose:
-                    print("Above point has bad data, discarding.")
+                if error:
                     error = False
                     continue
                 
