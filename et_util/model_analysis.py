@@ -18,7 +18,7 @@ def plot_model_performance(num_points, test_data, predictions, function):
    test_data_size = 0
    for element in test_data:
      test_data_size += 1
-   test_labels_arr = function(test_data)
+   test_labels_arr = [label for feature, label, subject_id in test_data]
    
    plt.xlim(0,100)
    plt.ylim(100,0)
@@ -85,22 +85,3 @@ def plot_model_performance(num_points, test_data, predictions, function):
    red_patch = mpatches.Patch(color='red', label='Predictions')
    plt.legend(loc="upper right", handles=[red_patch, blue_patch])
    plt.show()
-
-
-def gen_test_arr_landmarks(test_data):
-  """Helper function for plot_model_performance that generates
-  array of test points from test data in format landmarks, label,
-  subject_id.
-  :param test_data:
-  :return: array of test points"""
-  arr = [label for landmarks, label, subject_id in test_data]
-  return arr
-
-def gen_test_arr_images(test_data):
-    """Helper function for plot_model_performance that generates
-    array of test points from test data in format image, lable,
-    subject_id.
-    :param test_data:
-    :return: array of test points"""
-    arr = [label for landmarks, label, subject_id in test_data]
-    return arr
