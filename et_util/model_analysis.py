@@ -5,14 +5,14 @@ import random
 
 from custom_loss import normalized_weighted_euc_dist
     
-def plot_model_performance(num_points, test_data, predictions, function):
+def plot_model_performance(num_points, test_data, predictions):
    """
    Plots performance of model and displays average distance and variance of predictions.
+   Data must be of shape feature, label, subject_id.
     
    :param num_points: number of points to be plotted
    :param test_data: test data used to make predictions
    :param predictions: output of model based on test data
-   :param function: function that outputs array of labels for data of certain shape
    """
    
    test_data_size = 0
