@@ -1,7 +1,6 @@
 import json
-
 import cv2
-import mediapipe as mp
+import os
 
 
 def getLeftEye(image, landmarks):
@@ -36,28 +35,6 @@ def getRightEye(image, landmarks):
     return right_eye
 
 
-def extract_eyes(json_path: str, webm_path: str):
-    """
-  Processing function to be used with process_one_file that outputs eye data and
-  three other random features.
-
-  :param json_path: .json file loaded with process_one_file function to be processed.
-  :param webm_path: Path of .json file's respective webm file.
-  :return: Array containing images of eyes and random features.
-  """
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
-    # temp fix since this function isn't being used
-    meshes = []  # extract_mesh_from_video(webm_path, face_mesh)
-    eyes = []
-    i = 0
-    for i in range(0, len(meshes)):
-        cap = cv2.VideoCapture(webm_path)
-        ret, frame = cap.read()
-        eyes.append([getLeftEye(frame, meshes[i]), getRightEye(frame, meshes[i])])
-    return eyes
-
-
 def process_one_file_webm(webm_path: str, in_path: str, file_name: str, process):
     """
     A helper function that opens and processes a file with a specified
@@ -74,3 +51,28 @@ def process_one_file_webm(webm_path: str, in_path: str, file_name: str, process)
         data = json.load(file)
         j = data[file_name.split('.')[0]]
     return process(j, webm_path)
+
+
+def get_last_valid_frame(file_path: str, face_mesh):
+    cap = cv2.VideoCapture(file_path)
+    frames = []
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if ret:
+            frames.append(frame)
+        else:
+            break
+
+    i = -1
+    while True:
+        try:
+            results = face_mesh.process(frames[i])
+        except:
+            print(os.path.basename(file_path) + " has no possible frames.")
+            return -1
+        if results.multi_face_landmarks is not None:
+            return results.multi_face_landmarks[0].landmark
+        else:
+            i -= 1
+            print(os.path.basename(file_path) + " has a bad last frame. [Try " + str(-i) + "]")
