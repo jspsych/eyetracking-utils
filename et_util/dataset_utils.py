@@ -196,7 +196,7 @@ def process_tfr_to_tfds(directory_path,
     dataset = dataset.map(process)
     if filter_imgs == True:
       dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
-      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)), args[1:4]))
+      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)),) + args[1:])
   
     ds_size = 0
     for element in dataset:
