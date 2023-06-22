@@ -123,7 +123,7 @@ def make_single_example_jpg(image_path, face_mesh):
 
   return feature_description
 
-def make_single_example_landmarks_and_jpgs(image_path, face_mesh):
+def make_single_example_landmarks_and_jpg(image_path, face_mesh):
   """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. In addition to subject id and labels, 
   TFRecord files include jpg width and height, and raw image array. Also includes mediapipe landmarks.
 
