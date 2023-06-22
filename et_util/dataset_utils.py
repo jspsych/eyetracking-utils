@@ -195,8 +195,8 @@ def process_tfr_to_tfds(directory_path,
     dataset = tf.data.TFRecordDataset(file_paths)
     dataset = dataset.map(process)
     if filter_imgs == True:
-      dataset = dataset.filter(lambda image, label, id: tf.math.reduce_all(tf.math.equal(tf.shape(image), (640, 480, 3))))
-      dataset = dataset.map(lambda image, label, id: (tf.reshape(image, (640, 480, 3)), label, id))
+      dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
+      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)), args[1:4]))
   
     ds_size = 0
     for element in dataset:
@@ -217,9 +217,11 @@ def parse_tfr_element_mediapipe(element):
     get_dataset function.
     Gets subject id as unique integer, x and y coordinates as label and 
     mediapipe landmarks.
-    Use for data generated with make_single_example_mediapipe.
+    Use for data generated with make_single_example_mediapipe (i.e.
+    data in landmarks_tfrecords.tar.gz).
+    
     :param element: tfr element in raw dataset
-    :return: subject_id, landmarks, label(x, y)"""
+    :return: landmarks, label(x, y), subject_id"""
     data = {
         'subject_id': tf.io.FixedLenFeature([], tf.int64),
         'x': tf.io.FixedLenFeature([], tf.float32),
@@ -268,3 +270,41 @@ def parse_tfr_element_jpg(element):
     image = tf.reshape(image, shape=(width, height, depth))
 
     return image, label, subject_id
+
+def parse_tfr_element_jpg_and_mediapipe(element):
+    """Process function that parses a tfr element in a raw dataset for get_dataset function.
+    Gets mediapipe landmarks, raw image, image width, image height, subject id, and xy labels.
+    Use for data generated with make_single_example_landmarks_and_jpgs (i.e. data in
+    jpg_landmarks_tfrecords.tar.gz)
+
+    :param element: tfr element in raw dataset
+    :return: image, label(x,y), landmarks, subject_id
+    """
+
+    data_structure = {
+        'landmarks': tf.io.FixedLenFeature([], tf.string),
+        'width': tf.io.FixedLenFeature([], tf.int64),
+        'height': tf.io.FixedLenFeature([], tf.int64),
+        'x': tf.io.FixedLenFeature([], tf.float32),
+        'y': tf.io.FixedLenFeature([], tf.float32),
+        'raw_image': tf.io.FixedLenFeature([], tf.string),
+        'subject_id': tf.io.FixedLenFeature([], tf.int64),
+    }
+
+    content = tf.io.parse_single_example(element, data_structure)
+
+    landmarks = content['landmarks']
+    raw_image = content['raw_image']
+    width = content['width']
+    height = content['height']
+    depth = 3
+    label = [content['x'], content['y']]
+    subject_id = content['subject_id']
+
+    landmarks = tf.io.parse_tensor(landmarks, out_type=tf.float32)
+    landmarks = tf.reshape(landmarks, shape=(478, 3))
+
+    image = tf.io.decode_jpeg(raw_image)
+    image = tf.reshape(image, shape=(width, height, depth))
+
+    return image, label, landmarks, subject_id
