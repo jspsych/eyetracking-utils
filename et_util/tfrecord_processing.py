@@ -123,6 +123,46 @@ def make_single_example_jpg(image_path, face_mesh):
 
   return feature_description
 
+def make_single_example_landmarks_and_jpgs(image_path, face_mesh):
+  """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. In addition to subject id and labels, 
+  TFRecord files include jpg width and height, and raw image array. Also includes mediapipe landmarks.
+
+  feature_description = {landmarks, width, height, raw_image}
+
+  :param image_path: directory of jpeg files
+  :param face_mesh: mediapipe facemesh
+  """
+  
+  image = cv2.imread(image_path)
+  if image is None:
+        print("Cannot read image")
+        return 'error'
+
+  results = face_mesh.process(image)
+  if not results.multi_face_landmarks:
+      print("Cannot make mesh")
+      return 'error'
+  
+  landmarks = results.multi_face_landmarks[0].landmark
+  lm_arr = [[l.x, l.y, l.z] for l in landmarks]
+
+  image = tf.io.read_file(image_path)
+
+  lm_arr = tf.io.serialize_tensor(lm_arr)
+
+  # get the shape of the image from the JPEG file header
+
+  image_shape = tf.io.extract_jpeg_shape(image, output_type=tf.dtypes.int64, name=None)
+
+  # Feature description of image to use when parsing
+  feature_description = {
+    'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
+    'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
+    'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
+    'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
+  }
+  return feature_description
+
 def remove_subject_tfrecords(directory, subject_ids):
   """Function that removes TFRecords files based on a list of subject ids. 
 
