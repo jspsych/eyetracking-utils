@@ -165,7 +165,7 @@ def make_single_example_landmarks_and_jpg(image_path, face_mesh):
 
 def make_single_example_landmarks_and_eyes(image_path, face_mesh):
   """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. 
-  In addition to subject id and labels, TFRecord files include eye image width and height, 
+  In addition to subject id and labels, TFRecord files include eye image widths and heights, 
   and raw left and right eye image arrays. Also includes mediapipe landmarks.
 
   feature_description = {landmarks, left_width, right_width, left_height, right_height, left_eye, right_eye}
