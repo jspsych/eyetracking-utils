@@ -163,6 +163,53 @@ def make_single_example_landmarks_and_jpg(image_path, face_mesh):
   }
   return feature_description
 
+def make_single_example_landmarks_and_eyes(image_path, face_mesh):
+  """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. 
+  In addition to subject id and labels, TFRecord files include eye image width and height, 
+  and raw left and right eye image arrays. Also includes mediapipe landmarks.
+
+  feature_description = {landmarks, left_width, right_width, left_height, right_height, left_eye, right_eye}
+
+  :param image_path: directory of jpeg files
+  :param face_mesh: mediapipe facemesh
+  """
+  
+  image = cv2.imread(image_path)
+  if image is None:
+        print("Cannot read image")
+        return 'error'
+
+  results = face_mesh.process(image)
+  if not results.multi_face_landmarks:
+      print("Cannot make mesh")
+      return 'error'
+  
+  landmarks = results.multi_face_landmarks[0].landmark
+  lm_arr = [[l.x, l.y, l.z] for l in landmarks]
+
+  left_eye_arr = getLeftEye(image, lm_arr)
+  right_eye_arr = getRightEye(image, lm_arr)
+
+  left_shape = tf.shape(left_eye_arr)
+  right_shape = tf.shape(right_eye_arr)
+
+  left_eye = tf.io.serialize_tensor(left_eye_arr)
+  right_eye = tf.io.serialize_tensor(right_eye_arr)
+
+  lm_arr = tf.io.serialize_tensor(lm_arr)
+
+  # Feature description of image to use when parsing
+  feature_description = {
+    'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
+    'left_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[1])])),
+    'right_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[1])])),
+    'left_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[0])])),
+    'right_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[0])])),
+    'left_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[left_eye.numpy()])),
+    'right_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[right_eye.numpy()]))
+  }
+  return feature_description
+
 def remove_subject_tfrecords(directory, subject_ids):
   """Function that removes TFRecords files based on a list of subject ids. 
 
