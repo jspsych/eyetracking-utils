@@ -4,6 +4,7 @@ import cv2
 import fnmatch
 import mediapipe as mp
 
+from et_util.process_functions import getRightEye, getLeftEye
 
 def process_jpg_to_tfr(
         in_path: str, 
