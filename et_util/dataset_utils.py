@@ -195,8 +195,8 @@ def process_tfr_to_tfds(directory_path,
     dataset = tf.data.TFRecordDataset(file_paths)
     dataset = dataset.map(process)
     if filter_imgs == True:
-      dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (480, 640, 3))))
-      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (480, 640, 3)),) + args[1:])
+      dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
+      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)),) + args[1:])
   
     ds_size = 0
     for element in dataset:
@@ -315,7 +315,7 @@ def parse_tfr_element_jpg_and_mediapipe(element):
 def parse_tfr_element_eyes_and_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
     Gets mediapipe landmarks, raw eye images, eye image width, eye image height, subject id, and xy labels.
-    Eye images are reshaped to (20, 40, 3).
+    Eye images are reshaped to (40, 20, 3).
     Use for data generated with make_single_example_landmarks_and_eyes (i.e. data in
     eyes_landmarks_tfrecords.tar.gz).
 
@@ -353,14 +353,14 @@ def parse_tfr_element_eyes_and_mediapipe(element):
 
     left_eye = tf.io.parse_tensor(left_eye, out_type=tf.uint8)
     left_eye = tf.reshape(left_eye, shape=(left_height, left_width, 3))
-    left_eye = tf.image.resize(left_eye, [20, 40])
-    left_eye_reshaped = tf.reshape(left_eye, shape=(20, 40, 3))
+    left_eye = tf.image.resize(left_eye, [40, 20])
+    left_eye_reshaped = tf.reshape(left_eye, shape=(40, 20, 3))
     left_eye_reshaped = tf.cast(left_eye_reshaped, tf.uint8)
 
     right_eye = tf.io.parse_tensor(right_eye, out_type=tf.uint8)
     right_eye = tf.reshape(right_eye, shape=(right_height, right_width, 3))
-    right_eye = tf.image.resize(right_eye, [20, 40])
-    right_eye_reshaped = tf.reshape(right_eye, shape=(20, 40, 3))
+    right_eye = tf.image.resize(right_eye, [40, 20])
+    right_eye_reshaped = tf.reshape(right_eye, shape=(40, 20, 3))
     right_eye_reshaped = tf.cast(right_eye_reshaped, tf.uint8)
 
     return left_eye_reshaped, right_eye_reshaped, landmarks, label, subject_id
