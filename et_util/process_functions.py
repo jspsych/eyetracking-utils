@@ -6,12 +6,12 @@ import mediapipe as mp
 
 def getLeftEye(image, landmarks):
     """
-  Helper function for extract_eyes that extracts the left eye
-  from an image.
+    Helper function for extract_eyes that extracts the left eye
+    from an image.
 
-  :param image: Image of face
-  :param landmarks: Mesh of face
-  """
+    :param image: Image of face
+    :param landmarks: Mesh of face
+    """
     eye_top = int(landmarks[27][1] * image.shape[0])
     eye_left = int(landmarks[226][0] * image.shape[1])
     eye_bottom = int(landmarks[23][1] * image.shape[0])
@@ -22,12 +22,12 @@ def getLeftEye(image, landmarks):
 
 def getRightEye(image, landmarks):
     """
-  Helper function for extract_eyes that extracts the right eye
-  from an image.
+    Helper function for extract_eyes that extracts the right eye
+    from an image.
 
-  :param image: Image of face
-  :param landmarks: Mesh of face
-  """
+    :param image: Image of face
+    :param landmarks: Mesh of face
+    """
     eye_top = int(landmarks[257][1] * image.shape[0])
     eye_left = int(landmarks[464][0] * image.shape[1])
     eye_bottom = int(landmarks[253][1] * image.shape[0])
@@ -38,13 +38,13 @@ def getRightEye(image, landmarks):
 
 def extract_eyes(json_path: str, webm_path: str):
     """
-  Processing function to be used with process_one_file that outputs eye data and
-  three other random features.
+    Processing function to be used with process_one_file that outputs eye data and
+    three other random features.
 
-  :param json_path: .json file loaded with process_one_file function to be processed.
-  :param webm_path: Path of .json file's respective webm file.
-  :return: Array containing images of eyes and random features.
-  """
+    :param json_path: .json file loaded with process_one_file function to be processed.
+    :param webm_path: Path of .json file's respective webm file.
+    :return: Array containing images of eyes and random features.
+    """
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, refine_landmarks=True)
     # temp fix since this function isn't being used

@@ -6,8 +6,9 @@ import mediapipe as mp
 
 from et_util.process_functions import getRightEye, getLeftEye
 
+
 def process_jpg_to_tfr(
-        in_path: str, 
+        in_path: str,
         out_path: str,
         process,
         overwrite=True,
@@ -63,14 +64,14 @@ def process_jpg_to_tfr(
                     print(f"Processed point [{x}, {y}]")
                     if error:
                         print("Above point has bad data, discarding.")
-                
+
                 if error:
                     error = False
                     continue
-                
+
                 tag.update(data)
                 example = tf.train.Example(features=tf.train.Features(feature=tag))
-                
+
                 writer.write(example.SerializeToString())
             if verbose:
                 print("Generated " + subject_id + ".tfrecords")
@@ -95,132 +96,143 @@ def make_single_example_mediapipe(image_path, face_mesh):
     if not results.multi_face_landmarks:
         print("Cannot make mesh")
         return 'error'
-    
+
     landmarks = results.multi_face_landmarks[0].landmark
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
     lm_arr = tf.io.serialize_tensor(lm_arr)
-    
+
     return {'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()]))}
-       
+
+
 def make_single_example_jpg(image_path, face_mesh):
-  """Converts a directory of jpg files to a directory of TFRecord files with one file per unique subject. In addition to subject id and labels, TFRecord files include image width, image height, and raw image array.
+    """
+    Converts a directory of jpg files to a directory of TFRecord files with one file per unique subject.
+    In addition to subject id and labels, TFRecord files include image width,
+    image height, and raw image array.
 
-  :param image_path: directory of jpeg files
-  :param face_mesh: empty variable needed to integrate with process_jpg_to_tfr
-  """
+    :param image_path: directory of jpeg files
+    :param face_mesh: empty variable needed to integrate with process_jpg_to_tfr
+    """
 
-  # read the JPEG source file into a tf.string
-  image = tf.io.read_file(image_path)
+    # read the JPEG source file into a tf.string
+    image = tf.io.read_file(image_path)
 
-  # get the shape of the image from the JPEG file header
-  image_shape = tf.io.extract_jpeg_shape(image, output_type=tf.dtypes.int64, name=None)
+    # get the shape of the image from the JPEG file header
+    image_shape = tf.io.extract_jpeg_shape(image, output_type=tf.dtypes.int64, name=None)
 
-  # Feature description of image to use when parsing
-  feature_description = {
-    'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
-    'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
-    'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
-  }
+    # Feature description of image to use when parsing
+    feature_description = {
+        'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
+        'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
+        'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
+    }
 
-  return feature_description
+    return feature_description
+
 
 def make_single_example_landmarks_and_jpg(image_path, face_mesh):
-  """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. In addition to subject id and labels, 
-  TFRecord files include jpg width and height, and raw image array. Also includes mediapipe landmarks.
+    """
+    Converts jpg file to a dictionary to be used in process_jpg_to_tfr. In addition to
+    subject id and labels, TFRecord files include jpg width and height, and raw image array.
+    Also includes mediapipe landmarks.
 
-  feature_description = {landmarks, width, height, raw_image}
+    feature_description = {landmarks, width, height, raw_image}
 
-  :param image_path: directory of jpeg files
-  :param face_mesh: mediapipe facemesh
-  """
-  
-  image = cv2.imread(image_path)
-  if image is None:
+    :param image_path: directory of jpeg files
+    :param face_mesh: mediapipe facemesh
+    """
+
+    image = cv2.imread(image_path)
+    if image is None:
         print("Cannot read image")
         return 'error'
 
-  results = face_mesh.process(image)
-  if not results.multi_face_landmarks:
-      print("Cannot make mesh")
-      return 'error'
-  
-  landmarks = results.multi_face_landmarks[0].landmark
-  lm_arr = [[l.x, l.y, l.z] for l in landmarks]
+    results = face_mesh.process(image)
+    if not results.multi_face_landmarks:
+        print("Cannot make mesh")
+        return 'error'
 
-  image = tf.io.read_file(image_path)
+    landmarks = results.multi_face_landmarks[0].landmark
+    lm_arr = [[l.x, l.y, l.z] for l in landmarks]
 
-  lm_arr = tf.io.serialize_tensor(lm_arr)
+    image = tf.io.read_file(image_path)
 
-  # get the shape of the image from the JPEG file header
+    lm_arr = tf.io.serialize_tensor(lm_arr)
 
-  image_shape = tf.io.extract_jpeg_shape(image, output_type=tf.dtypes.int64, name=None)
+    # get the shape of the image from the JPEG file header
 
-  # Feature description of image to use when parsing
-  feature_description = {
-    'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
-    'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
-    'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
-    'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
-  }
-  return feature_description
+    image_shape = tf.io.extract_jpeg_shape(image, output_type=tf.dtypes.int64, name=None)
+
+    # Feature description of image to use when parsing
+    feature_description = {
+        'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
+        'width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[1])])),
+        'height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(image_shape[0])])),
+        'raw_image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[image.numpy()]))
+    }
+    return feature_description
+
 
 def make_single_example_landmarks_and_eyes(image_path, face_mesh):
-  """Converts jpg file to a dictionary to be used in process_jpg_to_tfr. 
-  In addition to subject id and labels, TFRecord files include eye image widths and heights, 
-  and raw left and right eye image arrays. Also includes mediapipe landmarks.
+    """
+    Converts jpg file to a dictionary to be used in process_jpg_to_tfr.
+    In addition to subject id and labels, TFRecord files include eye image widths and heights,
+    and raw left and right eye image arrays. Also includes mediapipe landmarks.
 
-  feature_description = {landmarks, left_width, right_width, left_height, right_height, left_eye, right_eye}
+    feature_description = {landmarks, left_width, right_width, left_height, right_height, left_eye, right_eye}
 
-  :param image_path: directory of jpeg files
-  :param face_mesh: mediapipe facemesh
-  """
-  
-  image = cv2.imread(image_path)
-  if image is None:
+    :param image_path: directory of jpeg files
+    :param face_mesh: mediapipe facemesh
+    """
+
+    image = cv2.imread(image_path)
+    if image is None:
         print("Cannot read image")
         return 'error'
 
-  results = face_mesh.process(image)
-  if not results.multi_face_landmarks:
-      print("Cannot make mesh")
-      return 'error'
-  
-  landmarks = results.multi_face_landmarks[0].landmark
-  lm_arr = [[l.x, l.y, l.z] for l in landmarks]
+    results = face_mesh.process(image)
+    if not results.multi_face_landmarks:
+        print("Cannot make mesh")
+        return 'error'
 
-  left_eye_arr = getLeftEye(image, lm_arr)
-  right_eye_arr = getRightEye(image, lm_arr)
+    landmarks = results.multi_face_landmarks[0].landmark
+    lm_arr = [[l.x, l.y, l.z] for l in landmarks]
 
-  left_shape = tf.shape(left_eye_arr)
-  right_shape = tf.shape(right_eye_arr)
+    left_eye_arr = getLeftEye(image, lm_arr)
+    right_eye_arr = getRightEye(image, lm_arr)
 
-  left_eye = tf.io.serialize_tensor(left_eye_arr)
-  right_eye = tf.io.serialize_tensor(right_eye_arr)
+    left_shape = tf.shape(left_eye_arr)
+    right_shape = tf.shape(right_eye_arr)
 
-  lm_arr = tf.io.serialize_tensor(lm_arr)
+    left_eye = tf.io.serialize_tensor(left_eye_arr)
+    right_eye = tf.io.serialize_tensor(right_eye_arr)
 
-  # Feature description of image to use when parsing
-  feature_description = {
-    'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
-    'left_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[1])])),
-    'right_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[1])])),
-    'left_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[0])])),
-    'right_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[0])])),
-    'left_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[left_eye.numpy()])),
-    'right_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[right_eye.numpy()]))
-  }
-  return feature_description
+    lm_arr = tf.io.serialize_tensor(lm_arr)
+
+    # Feature description of image to use when parsing
+    feature_description = {
+        'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
+        'left_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[1])])),
+        'right_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[1])])),
+        'left_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[0])])),
+        'right_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[0])])),
+        'left_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[left_eye.numpy()])),
+        'right_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[right_eye.numpy()]))
+    }
+    return feature_description
+
 
 def remove_subject_tfrecords(directory, subject_ids):
-  """Function that removes TFRecords files based on a list of subject ids. 
+    """
+    Function that removes TFRecords files based on a list of subject ids.
 
-  :param directory: directory with TFRecord files to be filtered
-  :param subject_ids: list of subject ids
-  """
+    :param directory: directory with TFRecord files to be filtered
+    :param subject_ids: list of subject ids
+    """
 
-  filenames = [subject_id + '.tfrecords' for subject_id in subject_ids]
-  for filename in os.listdir(directory):
-      if filename in filenames:
-          file_path = os.path.join(directory, filename)
-          os.remove(file_path)
-          print(f"Removed file: {file_path}")
+    filenames = [subject_id + '.tfrecords' for subject_id in subject_ids]
+    for filename in os.listdir(directory):
+        if filename in filenames:
+            file_path = os.path.join(directory, filename)
+            os.remove(file_path)
+            print(f"Removed file: {file_path}")

@@ -272,6 +272,7 @@ def parse_tfr_element_jpg(element):
 
     return image, label, subject_id
 
+
 def parse_tfr_element_jpg_and_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
     Gets mediapipe landmarks, raw image, image width, image height, subject id, and xy labels.
@@ -309,6 +310,7 @@ def parse_tfr_element_jpg_and_mediapipe(element):
     image = tf.reshape(image, shape=(height, width, depth))
 
     return image, label, landmarks, subject_id
+
 
 def parse_tfr_element_eyes_and_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
@@ -349,7 +351,6 @@ def parse_tfr_element_eyes_and_mediapipe(element):
     landmarks = tf.io.parse_tensor(landmarks, out_type=tf.float32)
     landmarks = tf.reshape(landmarks, shape=(478, 3))
 
-
     left_eye = tf.io.parse_tensor(left_eye, out_type=tf.uint8)
     left_eye = tf.reshape(left_eye, shape=(left_height, left_width, 3))
     left_eye = tf.image.resize(left_eye, [20, 40])
@@ -361,6 +362,5 @@ def parse_tfr_element_eyes_and_mediapipe(element):
     right_eye = tf.image.resize(right_eye, [20, 40])
     right_eye_reshaped = tf.reshape(right_eye, shape=(20, 40, 3))
     right_eye_reshaped = tf.cast(right_eye_reshaped, tf.int64)
-
 
     return left_eye_reshaped, right_eye_reshaped, landmarks, label, subject_id
