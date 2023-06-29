@@ -355,12 +355,12 @@ def parse_tfr_element_eyes_and_mediapipe(element):
     left_eye = tf.reshape(left_eye, shape=(left_height, left_width, 3))
     left_eye = tf.image.resize(left_eye, [20, 40])
     left_eye_reshaped = tf.reshape(left_eye, shape=(20, 40, 3))
-    left_eye_reshaped = tf.cast(left_eye_reshaped, tf.int64)
+    left_eye_reshaped = tf.cast(left_eye_reshaped, tf.uint8)
 
     right_eye = tf.io.parse_tensor(right_eye, out_type=tf.uint8)
     right_eye = tf.reshape(right_eye, shape=(right_height, right_width, 3))
     right_eye = tf.image.resize(right_eye, [20, 40])
     right_eye_reshaped = tf.reshape(right_eye, shape=(20, 40, 3))
-    right_eye_reshaped = tf.cast(right_eye_reshaped, tf.int64)
+    right_eye_reshaped = tf.cast(right_eye_reshaped, tf.uint8)
 
     return left_eye_reshaped, right_eye_reshaped, landmarks, label, subject_id
