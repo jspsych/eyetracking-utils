@@ -315,7 +315,7 @@ def parse_tfr_element_jpg_and_mediapipe(element):
 def parse_tfr_element_eyes_and_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
     Gets mediapipe landmarks, raw eye images, eye image width, eye image height, subject id, and xy labels.
-    Eye images are reshaped to (40, 20, 3).
+    Eye images are reshaped to (60, 30).
     Use for data generated with make_single_example_landmarks_and_eyes (i.e. data in
     eyes_landmarks_tfrecords.tar.gz).
 
@@ -352,15 +352,11 @@ def parse_tfr_element_eyes_and_mediapipe(element):
     landmarks = tf.reshape(landmarks, shape=(478, 3))
 
     left_eye = tf.io.parse_tensor(left_eye, out_type=tf.uint8)
-    left_eye = tf.reshape(left_eye, shape=(left_width, left_height, 3))
-    left_eye = tf.image.resize(left_eye, [40, 20])
-    left_eye_reshaped = tf.reshape(left_eye, shape=(40, 20, 3))
-    left_eye_reshaped = tf.cast(left_eye_reshaped, tf.uint8)
+    left_eye = tf.reshape(left_eye, shape=(left_width, left_height))
+    left_eye = tf.reshape(left_eye, shape=(60,30))
 
     right_eye = tf.io.parse_tensor(right_eye, out_type=tf.uint8)
-    right_eye = tf.reshape(right_eye, shape=(right_width, right_height, 3))
-    right_eye = tf.image.resize(right_eye, [40, 20])
-    right_eye_reshaped = tf.reshape(right_eye, shape=(40, 20, 3))
-    right_eye_reshaped = tf.cast(right_eye_reshaped, tf.uint8)
+    right_eye = tf.reshape(right_eye, shape=(right_width, right_height))
+    right_eye = tf.reshape(left_eye, shape=(60,30))
 
-    return left_eye_reshaped, right_eye_reshaped, landmarks, label, subject_id
+    return left_eye, right_eye, landmarks, label, subject_id
