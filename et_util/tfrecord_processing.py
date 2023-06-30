@@ -177,7 +177,7 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
     """
     Converts jpg file to a dictionary to be used in process_jpg_to_tfr.
     In addition to subject id and labels, TFRecord files include eye image widths and heights,
-    and raw left and right eye image arrays. Also includes mediapipe landmarks.
+    and raw left and right eye grayscale image arrays. Also includes mediapipe landmarks.
 
     feature_description = {landmarks, left_width, right_width, left_height, right_height, left_eye, right_eye}
 
@@ -199,28 +199,29 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
 
     left_eye_arr = getLeftEye(image, lm_arr)
+    left_eye_arr_gs = cv2.cvtColor(left_eye_arr, cv2.COLOR_BGR2GRAY)
+    resized_left = cv2.resize(left_eye_arr_gs, (60, 30))
+
     right_eye_arr = getRightEye(image, lm_arr)
+    right_eye_arr_gs = cv2.cvtColor(right_eye_arr, cv2.COLOR_BGR2GRAY)
+    resized_right = cv2.resize(right_eye_arr_gs, (60, 30))
 
-    left_shape = tf.shape(left_eye_arr)
-    right_shape = tf.shape(right_eye_arr)
-
-    left_eye = tf.io.serialize_tensor(left_eye_arr)
-    right_eye = tf.io.serialize_tensor(right_eye_arr)
+    left_eye = tf.io.serialize_tensor(resized_left)
+    right_eye = tf.io.serialize_tensor(resized_right)
 
     lm_arr = tf.io.serialize_tensor(lm_arr)
 
     # Feature description of image to use when parsing
     feature_description = {
         'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
-        'left_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[1])])),
-        'right_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[1])])),
-        'left_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(left_shape[0])])),
-        'right_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(right_shape[0])])),
+        'left_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[60])),
+        'right_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[60])),
+        'left_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[30])),
+        'right_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[30])),
         'left_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[left_eye.numpy()])),
         'right_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[right_eye.numpy()]))
     }
     return feature_description
-
 
 def remove_subject_tfrecords(directory, subject_ids):
     """
