@@ -357,6 +357,6 @@ def parse_tfr_element_eyes_and_mediapipe(element):
 
     right_eye = tf.io.parse_tensor(right_eye, out_type=tf.uint8)
     right_eye = tf.reshape(right_eye, shape=(right_width, right_height))
-    right_eye = tf.reshape(left_eye, shape=(60,30))
+    right_eye = tf.reshape(right_eye, shape=(60,30))
 
     return left_eye, right_eye, landmarks, label, subject_id
