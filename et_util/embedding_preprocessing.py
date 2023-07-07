@@ -1,7 +1,6 @@
 import tensorflow as tf
-import numpy as np
-import math
-import os
+
+from et_util.custom_loss import normalized_weighted_euc_dist
 
 def find_relative_distance(p1, p2, p3):
     # Find the slope of the line formed by p1 and p2
@@ -113,3 +112,46 @@ def group_dataset(shuffled_dataset, window_size):
     )
 
     return transformed_data
+
+def mediapipe_triplet_map_combine_func(*data_tuple):
+    """Takes coordinates from y -- shape (3,2) -- and calculates
+    the distance between them and uses that to output normalized facemesh points
+    in a form to be used in triplet loss. Dataset must contain mediapipe landmarks and 
+    coordinate labels in format ([other features (optional)], landmarks, 
+    label, subject_id).
+
+    :param data_tuple: grouped tuple containing three elements from 
+    dataset.
+    :return: tuple of format (archor_right, anchor_left, positive_right,
+    positive_left, negative_right, negative_left)"""
+
+    points = data_tuple[-2]
+    meshes = data_tuple[-3]
+
+    point1 = tf.gather(points, [0])
+    point2 = tf.gather(points, [1])
+    point3 = tf.gather(points, [2])
+
+    dist_1_2 = normalized_weighted_euc_dist(point1, point2)
+    dist_1_3 = normalized_weighted_euc_dist(point1, point3)
+
+    # 128 is maximum distance between points in our setup.
+    # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
+
+    input_features_1 = tf.reshape(tf.gather(meshes, [0]), (478,3))
+    input_features_2 = tf.reshape(tf.gather(meshes, [1]), (478,3))
+    input_features_3 = tf.reshape(tf.gather(meshes, [2]), (478,3))
+
+    (input_eyes_1_right, input_eyes_1_left) = norm_facemesh(input_features_1)
+    (input_eyes_2_right, input_eyes_2_left) = norm_facemesh(input_features_2)
+    (input_eyes_3_right, input_eyes_3_left) = norm_facemesh(input_features_3)
+
+    (anchor_right, anchor_left) = (input_eyes_1_right, input_eyes_1_left)
+    (positive_right, positive_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_2_right, input_eyes_2_left),
+                        lambda: (input_eyes_3_right, input_eyes_3_left))
+    (negative_right, negative_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_3_right, input_eyes_3_left),
+                        lambda: (input_eyes_2_right, input_eyes_2_left))
+
+    return ((anchor_right, anchor_left, positive_right, positive_left, negative_right, negative_left))

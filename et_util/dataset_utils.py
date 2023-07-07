@@ -309,7 +309,7 @@ def parse_tfr_element_jpg_and_mediapipe(element):
     image = tf.io.decode_jpeg(raw_image)
     image = tf.reshape(image, shape=(width, height, depth))
 
-    return image, label, landmarks, subject_id
+    return image, landmarks, label, subject_id
 
 
 def parse_tfr_element_eyes_and_mediapipe(element):
