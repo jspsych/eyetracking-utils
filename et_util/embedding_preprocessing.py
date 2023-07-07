@@ -86,14 +86,15 @@ def norm_facemesh(facemesh):
 
     return (right_eye_norm, left_eye_norm)
     
-def group_dataset(dataset, window_size):
+def group_dataset(shuffled_dataset, window_size):
     """Groups dataset into groups where the key_func returns the same value
     i.e., the subject_id is the same. reduce_func is applied to each grouped
     dataset. window_size sets the maximum number of dataset elements in a grouped
     dataset.
-    :param dataset: dataset to group - pass test, validation, and train data
+    :param shuffled_dataset: shuffled dataset to group - pass test, validation, and train data
     individually into the function.
-    :param window_size: desired number of dataset elements in grouped dataset"""
+    :param window_size: desired number of dataset elements in grouped dataset
+    :return: Grouped dataset"""
 
     def reduce_func(key, grouped_dataset):
         # drop_remainder is important because we want the batches to have the 
@@ -105,7 +106,7 @@ def group_dataset(dataset, window_size):
     def key_func(*args):
         return args[-1]  
         
-    transformed_data = dataset.shuffle(10000).group_by_window(
+    transformed_data = shuffled_dataset.group_by_window(
         key_func,
         reduce_func,
         window_size
