@@ -85,7 +85,7 @@ def norm_facemesh(facemesh):
 
     return (right_eye_norm, left_eye_norm)
     
-def group_dataset(shuffled_dataset, window_size):
+def group_dataset(dataset, window_size):
     """Groups dataset into groups where the key_func returns the same value
     i.e., the subject_id is the same. reduce_func is applied to each grouped
     dataset. window_size sets the maximum number of dataset elements in a grouped
@@ -105,7 +105,7 @@ def group_dataset(shuffled_dataset, window_size):
     def key_func(*args):
         return args[-1]  
         
-    transformed_data = shuffled_dataset.group_by_window(
+    transformed_data = dataset.group_by_window(
         key_func,
         reduce_func,
         window_size
@@ -164,6 +164,22 @@ def mediapipe_triplet_map_combine_func(x,y,z):
 
 
     return ((anchor_right, anchor_left, positive_right, positive_left, negative_right, negative_left))
+
+def get_triplet_data_mediapipe(dataset, train=False):
+    """Processes dataset with landmarks into form that can be passed into triplet
+    loss model. Must batch dataset before passing to model.
+    :param dataset: Dataset with shape (landmarks, label, subject_id)
+    :param train: If dataset is train dataset, set to True
+    :return: Processed dataset with shape ((5,2), (5,2), (5,2), (5,2), (5,2), (5,2))"""
+    cached = dataset.map(map_norm_func).cache()
+    if train:
+        grouped_dataset = group_dataset(
+            cached.repeat().shuffle(20000), 
+            3).map(mediapipe_triplet_map_combine_func)
+    else:
+        grouped_dataset = group_dataset(
+            cached, 3).map(mediapipe_triplet_map_combine_func)
+    return grouped_dataset
 
 class DistanceLayer(tf.keras.layers.Layer):
     """
