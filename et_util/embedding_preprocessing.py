@@ -113,7 +113,12 @@ def group_dataset(shuffled_dataset, window_size):
 
     return transformed_data
 
-def mediapipe_triplet_map_combine_func(*data_tuple):
+def map_norm_func(x,y,z):
+    input = norm_facemesh(x)
+
+    return (input, y, z)
+
+def mediapipe_triplet_map_combine_func(x,y,z):
     """Takes coordinates from y -- shape (3,2) -- and calculates
     the distance between them and uses that to output normalized facemesh points
     in a form to be used in triplet loss. Dataset must contain mediapipe landmarks and 
@@ -125,12 +130,9 @@ def mediapipe_triplet_map_combine_func(*data_tuple):
     :return: tuple of format (archor_right, anchor_left, positive_right,
     positive_left, negative_right, negative_left)"""
 
-    points = data_tuple[-2]
-    meshes = data_tuple[-3]
-
-    point1 = tf.gather(points, [0])
-    point2 = tf.gather(points, [1])
-    point3 = tf.gather(points, [2])
+    point1 = tf.gather(y, [0])
+    point2 = tf.gather(y, [1])
+    point3 = tf.gather(y, [2])
 
     dist_1_2 = normalized_weighted_euc_dist(point1, point2)
     dist_1_3 = normalized_weighted_euc_dist(point1, point3)
@@ -138,21 +140,28 @@ def mediapipe_triplet_map_combine_func(*data_tuple):
     # 128 is maximum distance between points in our setup.
     # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
 
-    input_features_1 = tf.reshape(tf.gather(meshes, [0]), (478,3))
-    input_features_2 = tf.reshape(tf.gather(meshes, [1]), (478,3))
-    input_features_3 = tf.reshape(tf.gather(meshes, [2]), (478,3))
+    (right_eyes, left_eyes) = x
 
-    (input_eyes_1_right, input_eyes_1_left) = norm_facemesh(input_features_1)
-    (input_eyes_2_right, input_eyes_2_left) = norm_facemesh(input_features_2)
-    (input_eyes_3_right, input_eyes_3_left) = norm_facemesh(input_features_3)
+    (anchor_right, anchor_left) = (
+        tf.reshape(tf.gather(right_eyes, [0]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [0]), (5,2)))
 
-    (anchor_right, anchor_left) = (input_eyes_1_right, input_eyes_1_left)
     (positive_right, positive_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
-                        lambda: (input_eyes_2_right, input_eyes_2_left),
-                        lambda: (input_eyes_3_right, input_eyes_3_left))
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [1]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [1]), (5,2))),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [2]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [2]), (5,2))))
+
     (negative_right, negative_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
-                        lambda: (input_eyes_3_right, input_eyes_3_left),
-                        lambda: (input_eyes_2_right, input_eyes_2_left))
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [2]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [2]), (5,2))),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [1]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [1]), (5,2))))
+
 
     return ((anchor_right, anchor_left, positive_right, positive_left, negative_right, negative_left))
 
