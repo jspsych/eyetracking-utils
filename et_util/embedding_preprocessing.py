@@ -113,26 +113,19 @@ def group_dataset(dataset, window_size):
 
     return transformed_data
 
-def map_norm_func(x,y,z):
-    input = norm_facemesh(x)
-
-    return (input, y, z)
-
-def mediapipe_triplet_map_combine_func(x,y,z):
+def mediapipe_triplet_map_combine_func(landmarks,points,_):
     """Takes coordinates from y -- shape (3,2) -- and calculates
     the distance between them and uses that to output normalized facemesh points
     in a form to be used in triplet loss. Dataset must contain mediapipe landmarks and 
     coordinate labels in format ([other features (optional)], landmarks, 
     label, subject_id).
 
-    :param data_tuple: grouped tuple containing three elements from 
-    dataset.
     :return: tuple of format (archor_right, anchor_left, positive_right,
     positive_left, negative_right, negative_left)"""
 
-    point1 = tf.gather(y, [0])
-    point2 = tf.gather(y, [1])
-    point3 = tf.gather(y, [2])
+    point1 = tf.gather(points, [0])
+    point2 = tf.gather(points, [1])
+    point3 = tf.gather(points, [2])
 
     dist_1_2 = normalized_weighted_euc_dist(point1, point2)
     dist_1_3 = normalized_weighted_euc_dist(point1, point3)
@@ -140,7 +133,7 @@ def mediapipe_triplet_map_combine_func(x,y,z):
     # 128 is maximum distance between points in our setup.
     # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
 
-    (right_eyes, left_eyes) = x
+    (right_eyes, left_eyes) = landmarks
 
     (anchor_right, anchor_left) = (
         tf.reshape(tf.gather(right_eyes, [0]), (5,2)),
@@ -168,9 +161,15 @@ def mediapipe_triplet_map_combine_func(x,y,z):
 def get_triplet_data_mediapipe(dataset, train=False):
     """Processes dataset with landmarks into form that can be passed into triplet
     loss model. Must batch dataset before passing to model.
+
     :param dataset: Dataset with shape (landmarks, label, subject_id)
-    :param train: If dataset is train dataset, set to True
+    :param train: If dataset is train dataset, set to True. Repeats and shuffles.
     :return: Processed dataset with shape ((5,2), (5,2), (5,2), (5,2), (5,2), (5,2))"""
+
+    def map_norm_func(x,y,z):
+        input = norm_facemesh(x)
+        return (input, y, z)
+
     cached = dataset.map(map_norm_func).cache()
     if train:
         grouped_dataset = group_dataset(
@@ -179,6 +178,65 @@ def get_triplet_data_mediapipe(dataset, train=False):
     else:
         grouped_dataset = group_dataset(
             cached, 3).map(mediapipe_triplet_map_combine_func)
+    return grouped_dataset
+
+def eyes_triplet_map_combine_func(left_eye,right_eye,_,points,__):
+    """Takes coordinates from y --shape (3,2) -- and calculates
+    the distance between them and uses that to output eye images
+    in a form to be used in triplet loss. 
+    Only use for eyes_landmarks_tfrecords dataset.
+
+    :return: tuple of format (archor_right, anchor_left, positive_right,
+    positive_left, negative_right, negative_left)"""
+
+    point1 = tf.gather(points, [0])
+    point2 = tf.gather(points, [1])
+    point3 = tf.gather(points, [2])
+
+    # axis=1 was important here for generating the correct shape.
+    # has the function consider the input as a batch of 2d vectors.
+    # if none, considers it a single vector. if int, considers it
+    # a batch of vectors. int of 1 denotes 1d vectors. 2 denotes 2d,
+    # and so on
+    dist_1_2 = normalized_weighted_euc_dist(point1, point2)
+    dist_1_3 = normalized_weighted_euc_dist(point1, point3)
+
+    # 128 is maximum distance between points in our setup.
+    # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
+
+    input_eyes_1_left = tf.reshape(tf.gather(left_eye, [0]), (60,30,1))
+    input_eyes_1_right = tf.reshape(tf.gather(right_eye, [0]), (60,30,1))
+    input_eyes_2_left = tf.reshape(tf.gather(left_eye, [1]), (60,30,1))
+    input_eyes_2_right = tf.reshape(tf.gather(right_eye, [1]), (60,30,1))
+    input_eyes_3_left = tf.reshape(tf.gather(left_eye, [2]), (60,30,1))
+    input_eyes_3_right = tf.reshape(tf.gather(right_eye, [2]), (60,30,1))
+
+    (anchor_right, anchor_left) = (input_eyes_1_right, input_eyes_1_left)
+    (positive_right, positive_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_2_right, input_eyes_2_left),
+                        lambda: (input_eyes_3_right, input_eyes_3_left))
+    (negative_right, negative_left) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_3_right, input_eyes_3_left),
+                        lambda: (input_eyes_2_right, input_eyes_2_left))
+
+
+    return ((anchor_right, anchor_left, positive_right, positive_left, negative_right, negative_left))
+
+def get_triplet_data_eyes(dataset, train=False):
+    """Processes dataset with eye images into form that can be passed into triplet
+    loss model. Must batch dataset before passing to model.
+
+    :param dataset: Dataset with shape (left_eyes, right_eyes, landmarks, label, subject_id)
+    :param train: If dataset is train dataset, set to True. Repeats and shuffles.
+    :return: Processed dataset with shape ((5,2), (5,2), (5,2), (5,2), (5,2), (5,2))"""
+    cached = dataset.cache()
+    if train:
+        grouped_dataset = group_dataset(
+            cached.repeat().shuffle(20000), 
+            3).map(eyes_triplet_map_combine_func)
+    else:
+        grouped_dataset = group_dataset(
+            cached, 3).map(eyes_triplet_map_combine_func)
     return grouped_dataset
 
 class DistanceLayer(tf.keras.layers.Layer):
