@@ -170,7 +170,6 @@ def process_one_file(in_path: str, file_name: str, process):
 
     return process(j)
 
-
 def process_tfr_to_tfds(directory_path,
                         process,
                         filter_imgs=False,
@@ -194,23 +193,51 @@ def process_tfr_to_tfds(directory_path,
 
     dataset = tf.data.TFRecordDataset(file_paths)
     dataset = dataset.map(process)
-    if filter_imgs == True:
-      dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
-      dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)),) + args[1:])
-  
+    if filter_imgs:
+        dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
+        dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)),) + args[1:])
+
     ds_size = 0
-    for element in dataset:
+    for _ in dataset:
         ds_size += 1
 
     train_size = int(train_split * ds_size)
+
     val_size = int(val_split * ds_size)
 
+    train_ds_pre = dataset.take(train_size)
+    train_last_element = train_ds_pre.skip(train_size-1)
+    train_last_id = get_subject_id(train_last_element)
+
+    for element in dataset.skip(train_size):
+        id = element[-1]
+        if (id == train_last_id):
+            train_size += 1
+        else: break
+
     train_ds = dataset.take(train_size)
-    val_ds = dataset.skip(train_size).take(val_size)
+
+    val_ds_pre = dataset.skip(train_size).take(val_size)
+    val_last_element = val_ds_pre.skip(val_size-1)
+    val_last_id = get_subject_id(val_last_element)
+
+    for element in dataset.skip(train_size).skip(val_size):
+        id = element[-1]
+        if (id == val_last_id):
+            val_size += 1
+        else: break
+
+    val_ds = dataset.skip(train_size)
+
     test_ds = dataset.skip(train_size).skip(val_size)
 
     return train_ds, val_ds, test_ds
 
+def get_subject_id(tfdata):
+    """Helper function for process_tfr_to_tfds"""
+    subject_id = tfdata.map(lambda *args: args[-1])
+    id_int = list(subject_id.as_numpy_iterator())[0]
+    return id_int
 
 def parse_tfr_element_mediapipe(element):
     """Process function that parses a tfr element in a raw dataset for 
