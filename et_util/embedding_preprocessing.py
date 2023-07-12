@@ -96,9 +96,9 @@ def group_dataset(dataset, window_size):
     :return: Grouped dataset"""
 
     def reduce_func(key, grouped_dataset):
-        # drop_remainder is important because we want the batches to have the 
-        # desired size and only the desired size. we are using batch() to create 
-        # pairs of data in this case, *not* to batch for training the network in 
+        # drop_remainder is important because we want the batches to have the
+        # desired size and only the desired size. we are using batch() to create
+        # pairs of data in this case, *not* to batch for training the network in
         # the standard use of batch
         return grouped_dataset.batch(window_size, drop_remainder=True)
 
@@ -129,9 +129,6 @@ def mediapipe_triplet_map_combine_func(landmarks,points,_):
 
     dist_1_2 = normalized_weighted_euc_dist(point1, point2)
     dist_1_3 = normalized_weighted_euc_dist(point1, point3)
-
-    # 128 is maximum distance between points in our setup.
-    # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
 
     (right_eyes, left_eyes) = landmarks
 
@@ -173,7 +170,7 @@ def get_triplet_data_mediapipe(dataset, train=False):
     cached = dataset.map(map_norm_func).cache()
     if train:
         grouped_dataset = group_dataset(
-            cached.repeat().shuffle(20000), 
+            cached.repeat().shuffle(20000),
             3).map(mediapipe_triplet_map_combine_func)
     else:
         grouped_dataset = group_dataset(
@@ -193,16 +190,8 @@ def eyes_triplet_map_combine_func(left_eye,right_eye,_,points,__):
     point2 = tf.gather(points, [1])
     point3 = tf.gather(points, [2])
 
-    # axis=1 was important here for generating the correct shape.
-    # has the function consider the input as a batch of 2d vectors.
-    # if none, considers it a single vector. if int, considers it
-    # a batch of vectors. int of 1 denotes 1d vectors. 2 denotes 2d,
-    # and so on
     dist_1_2 = normalized_weighted_euc_dist(point1, point2)
     dist_1_3 = normalized_weighted_euc_dist(point1, point3)
-
-    # 128 is maximum distance between points in our setup.
-    # similarity = tf.constant([1.]) - (dist / tf.constant([128.]))
 
     input_eyes_1_left = tf.reshape(tf.gather(left_eye, [0]), (60,30,1))
     input_eyes_1_right = tf.reshape(tf.gather(right_eye, [0]), (60,30,1))
@@ -232,89 +221,9 @@ def get_triplet_data_eyes(dataset, train=False):
     cached = dataset.cache()
     if train:
         grouped_dataset = group_dataset(
-            cached.repeat().shuffle(20000), 
+            cached.repeat().shuffle(20000),
             3).map(eyes_triplet_map_combine_func)
     else:
         grouped_dataset = group_dataset(
             cached, 3).map(eyes_triplet_map_combine_func)
     return grouped_dataset
-
-class DistanceLayer(tf.keras.layers.Layer):
-    """
-    This layer is responsible for computing the distance between the anchor
-    embedding and the positive embedding, and the anchor embedding and the
-    negative embedding.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def call(self, anchor, positive, negative):
-        ap_distance = tf.reduce_sum(tf.square(anchor - positive), -1)
-        an_distance = tf.reduce_sum(tf.square(anchor - negative), -1)
-        return (ap_distance, an_distance)
-
-class SiameseModel(tf.keras.Model):
-    """The Siamese Network model with a custom training and testing loops.
-
-    Computes the triplet loss using the three embeddings produced by the
-    Siamese Network.
-
-    The triplet loss is defined as:
-       L(A, P, N) = max(‖f(A) - f(P)‖² - ‖f(A) - f(N)‖² + margin, 0)
-    """
-
-    def __init__(self, siamese_network, margin=0.5):
-        super().__init__()
-        self.siamese_network = siamese_network
-        self.margin = margin
-        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
-
-    def call(self, inputs):
-        return self.siamese_network(inputs)
-
-    def train_step(self, data):
-        # GradientTape is a context manager that records every operation that
-        # you do inside. We are using it here to compute the loss so we can get
-        # the gradients and apply them using the optimizer specified in
-        # `compile()`.
-        with tf.GradientTape() as tape:
-            loss = self._compute_loss(data)
-
-        # Storing the gradients of the loss function with respect to the
-        # weights/parameters.
-        gradients = tape.gradient(loss, self.siamese_network.trainable_weights)
-
-        # Applying the gradients on the model using the specified optimizer
-        self.optimizer.apply_gradients(
-            zip(gradients, self.siamese_network.trainable_weights)
-        )
-
-        # Let's update and return the training loss metric.
-        self.loss_tracker.update_state(loss)
-        return {"loss": self.loss_tracker.result()}
-
-    def test_step(self, data):
-        loss = self._compute_loss(data)
-
-        # Let's update and return the loss metric.
-        self.loss_tracker.update_state(loss)
-        return {"loss": self.loss_tracker.result()}
-
-    def _compute_loss(self, data):
-        # The output of the network is a tuple containing the distances
-        # between the anchor and the positive example, and the anchor and
-        # the negative example.
-        ap_distance, an_distance = self.siamese_network(data)
-
-        # Computing the Triplet Loss by subtracting both distances and
-        # making sure we don't get a negative value.
-        loss = ap_distance - an_distance
-        loss = tf.maximum(loss + self.margin, 0.0)
-        return loss
-
-    @property
-    def metrics(self):
-        # We need to list our metrics here so the `reset_states()` can be
-        # called automatically.
-        return [self.loss_tracker]

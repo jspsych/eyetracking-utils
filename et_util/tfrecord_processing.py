@@ -1,7 +1,7 @@
-import tensorflow as tf
-import os
-import cv2
 import fnmatch
+import os
+import tensorflow as tf
+import cv2
 import mediapipe as mp
 
 from et_util.process_functions import getRightEye, getLeftEye

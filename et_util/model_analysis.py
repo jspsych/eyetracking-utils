@@ -1,7 +1,7 @@
+import random
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-import random
 
 from et_util.custom_loss import normalized_weighted_euc_dist
     
