@@ -170,7 +170,7 @@ def get_triplet_data_mediapipe(dataset, train=False):
     cached = dataset.map(map_norm_func).cache()
     if train:
         grouped_dataset = group_dataset(
-            cached.repeat().shuffle(20000),
+            cached.shuffle(20000),
             3).map(mediapipe_triplet_map_combine_func)
     else:
         grouped_dataset = group_dataset(
@@ -221,7 +221,7 @@ def get_triplet_data_eyes(dataset, train=False):
     cached = dataset.cache()
     if train:
         grouped_dataset = group_dataset(
-            cached.repeat().shuffle(20000),
+            cached.shuffle(20000),
             3).map(eyes_triplet_map_combine_func)
     else:
         grouped_dataset = group_dataset(
