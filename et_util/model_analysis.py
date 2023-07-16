@@ -9,25 +9,22 @@ from et_util.custom_loss import normalized_weighted_euc_dist
 def plot_model_performance(num_points, test_data, predictions):
   """
   Plots performance of model and displays average distance and variance of predictions.
-  Data must be of shape left_eye, right_eye, mediapipe_landmarks, label, subject_id.
-  
+
   :param num_points: number of points to be plotted
   :param test_data: test data used to make predictions
   :param predictions: output of model based on test data
   """
-  
-  test_data_size = 0
-  for element in test_data:
-    test_data_size += 1
-  test_labels_arr = [label for feature, feature, feature, label, subject_id in test_data]
-  
+
+  test_data_size = len(predictions)
+  test_labels_arr = [elm[-2] for elm in test_data]
+
   plt.xlim(0,100)
   plt.ylim(100,0)
   plt.rcParams.update({'font.size': 7})
 
   indexes = []
   for i in range(0, num_points):
-    indexes += [random.randint(0, test_data_size)]
+    indexes.append(random.randint(0, test_data_size))
 
   distances = []
   for i in range(0, num_points):
@@ -35,8 +32,8 @@ def plot_model_performance(num_points, test_data, predictions):
     lx = label[0]
     ly = label[1]
 
-    px = predictions[:,0][indexes[i]]
-    py = predictions[:,1][indexes[i]]
+    px = predictions[indexes[i]][0][0]
+    py = predictions[indexes[i]][0][1]
 
     plt.scatter(lx, ly, c="blue", zorder=2)
     plt.scatter(px, py, c="red", zorder=3)
@@ -57,8 +54,8 @@ def plot_model_performance(num_points, test_data, predictions):
   for i in range(0, test_data_size):
     label = np.array(test_labels_arr[i])
 
-    px = predictions[:,0][i]
-    py = predictions[:,1][i]
+    px = predictions[i][0][0]
+    py = predictions[i][0][1]
 
     predicted_points_x += [px]
     predicted_points_y += [py]
