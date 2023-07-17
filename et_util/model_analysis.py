@@ -1,3 +1,4 @@
+import tensorflow as tf
 import random
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -84,6 +85,8 @@ def plot_model_performance(num_points, test_data, predictions):
   plt.legend(loc="upper right", handles=[red_patch, blue_patch])
   plt.show()
 
+# Takes ~8 minutes to get array for test data with 8K elements.
+# TODO: Optimize
 def get_corrcoef_array(model, test_data, map_function):
   """Predicts embedding values and calculates Pearson product-moment 
   correlation coefficient for each subject in test data. Records
