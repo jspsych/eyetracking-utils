@@ -25,7 +25,7 @@ def plot_model_performance(num_points, test_data, predictions):
 
   indexes = []
   for i in range(0, num_points):
-    indexes.append(random.randint(0, test_data_size))
+    indexes.append(random.randint(0, test_data_size - 1))
 
   distances = []
   for i in range(0, num_points):
@@ -36,7 +36,7 @@ def plot_model_performance(num_points, test_data, predictions):
     px = predictions[indexes[i]][0][0]
     py = predictions[indexes[i]][0][1]
 
-    plt.scatter(lx, ly, c="blue", zorder=2)
+    plt.scatter(lx, ly, edgecolors="black", facecolors="none", zorder=2)
     plt.scatter(px, py, c="red", zorder=3)
 
     x_values = [lx, px]
@@ -47,7 +47,7 @@ def plot_model_performance(num_points, test_data, predictions):
     distance = np.array(normalized_weighted_euc_dist([lx, ly], [px, py]))
     distances += [distance]
 
-    plt.text(lx+2.0, ly+1.0, "D: {:0.2f}".format(distance[0]))
+    plt.text(lx-2.5, ly+4.0, "{:0.2f}".format(distance[0]), fontsize=6)
 
   distances_all = []
   predicted_points_x = []
@@ -77,10 +77,10 @@ def plot_model_performance(num_points, test_data, predictions):
   variance_x = sum(square_diff_x) / test_data_size
   variance_y = sum(square_diff_y) / test_data_size
 
-  plt.text(80, 16, "Avg. Dist: {:0.2f}".format(avg_distance), color = "green", weight="bold")
-  plt.text(75, 21, "Var. of Pred x: {:0.2f}".format(variance_x), color = "green", weight="bold")
-  plt.text(75, 26, "Var. of Pred y: {:0.2f}".format(variance_y), color = "green", weight="bold")
-  blue_patch = mpatches.Patch(color="blue", label="Labels")
+  plt.text(80, 16, "Avg. Dist: {:0.2f}".format(avg_distance), color = "black", weight="bold")
+  plt.text(75, 21, "Var. of Pred x: {:0.2f}".format(variance_x), color = "black", weight="bold")
+  plt.text(75, 26, "Var. of Pred y: {:0.2f}".format(variance_y), color = "black", weight="bold")
+  blue_patch = mpatches.Patch(color="black", label="Labels")
   red_patch = mpatches.Patch(color='red', label='Predictions')
   plt.legend(loc="upper right", handles=[red_patch, blue_patch])
   plt.show()
@@ -94,7 +94,7 @@ def get_corrcoef_array(model, test_data, map_function):
 
   :param model: Embedding model to test
   :param test_data: Data used to test model
-  :param map_function: Map function to normalize data.
+  :param map_function: Map function to normalize data and organize into pairs.
   :return: Array of corrcoef values for each subject"""
 
   all_test_pairs = test_data.map(map_function)
