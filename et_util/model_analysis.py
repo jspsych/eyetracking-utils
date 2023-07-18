@@ -1,9 +1,7 @@
-import tensorflow as tf
 import random
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-from sklearn.metrics.pairwise import euclidean_distances
 
 from et_util.custom_loss import normalized_weighted_euc_dist
     
@@ -80,48 +78,7 @@ def plot_model_performance(num_points, test_data, predictions):
   plt.text(80, 16, "Avg. Dist: {:0.2f}".format(avg_distance), color = "black", weight="bold")
   plt.text(75, 21, "Var. of Pred x: {:0.2f}".format(variance_x), color = "black", weight="bold")
   plt.text(75, 26, "Var. of Pred y: {:0.2f}".format(variance_y), color = "black", weight="bold")
-  blue_patch = mpatches.Patch(color="black", label="Labels")
+  black_patch = mpatches.Patch(color="black", label="Labels")
   red_patch = mpatches.Patch(color='red', label='Predictions')
-  plt.legend(loc="upper right", handles=[red_patch, blue_patch])
+  plt.legend(loc="upper right", handles=[red_patch, black_patch])
   plt.show()
-
-# Takes ~8 minutes to get array for test data with 8K elements.
-# TODO: Optimize
-def get_corrcoef_array(model, test_data, map_function):
-  """Predicts embedding values and calculates Pearson product-moment 
-  correlation coefficient for each subject in test data. Records
-  correlation coefficient values in an array.
-
-  :param model: Embedding model to test
-  :param test_data: Data used to test model
-  :param map_function: Map function to normalize data and organize into pairs.
-  :return: Array of corrcoef values for each subject"""
-
-  all_test_pairs = test_data.map(map_function)
-  all_test_embeddings = model.predict(all_test_pairs.batch(1))
-
-  subject_id_arr = []
-  test_pairs_arr = []
-  count_start = 0
-  corrcoef_arr = []
-
-  for element in test_data:
-    subject_id = element[-1]
-    if subject_id not in subject_id_arr:
-      subject_id_arr.append(subject_id)
-      count_end = count_start + sum(int(tf.equal(subject_id, element[-1])) for element in test_data)
-
-      test_pairs = all_test_pairs.skip(count_start).take(count_end - count_start)
-      test_embeddings = all_test_embeddings[count_start:count_end]
-
-      test_pairs_arr.append(np.array([e[1] for e in test_pairs.as_numpy_iterator()]))
-
-      y_true = euclidean_distances(test_pairs_arr[-1]).flatten() * 0.025
-      y_pred = euclidean_distances(test_embeddings).flatten()
-
-      corrcoef = np.corrcoef(y_true, y_pred)[0, 1]
-      corrcoef_arr.append(corrcoef)
-
-      count_start = count_end
-
-  return corrcoef_arr
