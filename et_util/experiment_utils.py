@@ -91,7 +91,8 @@ def get_embedding_data(
     # give embedding layer desired number of nodes
     last_layer = embedding_model.layers[-1].output
     embedding_layer = tf.keras.layers.Dense(units=num_embedding_nodes,
-                                            activation=embedding_layer_activation)(last_layer)
+                                            activation=embedding_layer_activation,
+                                            name="embedding_layer")(last_layer)
     embedding_model = tf.keras.Model(inputs=embedding_model.input, outputs=embedding_layer)
 
     # define triplet loss training model
@@ -99,15 +100,21 @@ def get_embedding_data(
     for dims in input_shape:
         input_shape = (dims[1:])
 
-    training_model_input_left_eye_1 = tf.keras.layers.Input(shape=input_shape)
+    training_model_input_left_eye_1 = tf.keras.layers.Input(shape=input_shape,
+                                                            name="train_input_left_1")
 
-    training_model_input_right_eye_1 = tf.keras.layers.Input(shape=input_shape)
+    training_model_input_right_eye_1 = tf.keras.layers.Input(shape=input_shape,
+                                                             name="train_input_right_1")
 
-    training_model_input_left_eye_2 = tf.keras.layers.Input(shape=input_shape)
-    training_model_input_right_eye_2 = tf.keras.layers.Input(shape=input_shape)
+    training_model_input_left_eye_2 = tf.keras.layers.Input(shape=input_shape,
+                                                            name="train_input_left_2")
+    training_model_input_right_eye_2 = tf.keras.layers.Input(shape=input_shape,
+                                                             name="train_input_right_2")
 
-    training_model_input_left_eye_3 = tf.keras.layers.Input(shape=input_shape)
-    training_model_input_right_eye_3 = tf.keras.layers.Input(shape=input_shape)
+    training_model_input_left_eye_3 = tf.keras.layers.Input(shape=input_shape,
+                                                            name="train_input_left_3")
+    training_model_input_right_eye_3 = tf.keras.layers.Input(shape=input_shape,
+                                                             name="train_input_right_3")
 
     embedding_anchor = embedding_model(inputs=[training_model_input_left_eye_1,
                                                training_model_input_right_eye_1])
