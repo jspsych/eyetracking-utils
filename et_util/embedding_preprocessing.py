@@ -209,7 +209,8 @@ def eyes_triplet_map_combine_func(left_eye,right_eye,_,points,__):
                         lambda: (input_eyes_2_right, input_eyes_2_left))
 
 
-    return ((anchor_right, anchor_left, positive_right, positive_left, negative_right, negative_left))
+    return ((anchor_right, anchor_left, positive_right, 
+             positive_left, negative_right, negative_left))
 
 def get_triplet_data_eyes(dataset, train=False):
     """Processes dataset with eye images into form that can be passed into triplet
@@ -226,4 +227,88 @@ def get_triplet_data_eyes(dataset, train=False):
     else:
         grouped_dataset = group_dataset(
             cached, 3).map(eyes_triplet_map_combine_func)
+    return grouped_dataset
+
+def mp_and_img_triplet_map_combine_func(right_eye, left_eye, landmarks, points,_):
+    """Takes coordinates from y -- shape (3,2) -- and calculates
+    the distance between them and uses that to output normalized facemesh points
+    in a form to be used in triplet loss. Dataset must contain mediapipe landmarks and
+    coordinate labels in format ([other features (optional)], landmarks,
+    label, subject_id).
+
+    :return: tuple of format (archor_right, anchor_left, positive_right,
+    positive_left, negative_right, negative_left)"""
+
+    point1 = tf.gather(points, [0])
+    point2 = tf.gather(points, [1])
+    point3 = tf.gather(points, [2])
+
+    dist_1_2 = normalized_weighted_euc_dist(point1, point2)
+    dist_1_3 = normalized_weighted_euc_dist(point1, point3)
+
+    (right_eyes, left_eyes) = landmarks
+
+    input_eyes_1_left = tf.reshape(tf.gather(left_eye, [0]), (60,30,1))
+    input_eyes_1_right = tf.reshape(tf.gather(right_eye, [0]), (60,30,1))
+    input_eyes_2_left = tf.reshape(tf.gather(left_eye, [1]), (60,30,1))
+    input_eyes_2_right = tf.reshape(tf.gather(right_eye, [1]), (60,30,1))
+    input_eyes_3_left = tf.reshape(tf.gather(left_eye, [2]), (60,30,1))
+    input_eyes_3_right = tf.reshape(tf.gather(right_eye, [2]), (60,30,1))
+
+    (anchor_right_mp, anchor_left_mp) = (
+        tf.reshape(tf.gather(right_eyes, [0]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [0]), (5,2)))
+
+    (anchor_right_img, anchor_left_img) = (input_eyes_1_right, input_eyes_1_left)
+
+    (positive_right_mp, positive_left_mp) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [1]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [1]), (5,2))),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [2]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [2]), (5,2))))
+
+    (positive_right_img, positive_left_img) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_2_right, input_eyes_2_left),
+                        lambda: (input_eyes_3_right, input_eyes_3_left))
+
+    (negative_right_mp, negative_left_mp) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [2]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [2]), (5,2))),
+                        lambda: (
+        tf.reshape(tf.gather(right_eyes, [1]), (5,2)),
+        tf.reshape(tf.gather(left_eyes, [1]), (5,2))))
+
+    (negative_right_img, negative_left_img) = tf.cond(tf.less(dist_1_2, dist_1_3),
+                        lambda: (input_eyes_3_right, input_eyes_3_left),
+                        lambda: (input_eyes_2_right, input_eyes_2_left))
+
+
+    return ((anchor_right_mp, anchor_left_mp, anchor_right_img, anchor_left_img,
+             positive_right_mp, positive_left_mp, positive_right_img, positive_left_img,
+             negative_right_mp, negative_left_mp, negative_right_img, negative_left_img))
+
+def get_triplet_data_mp_and_img(dataset, train=False):
+    """Processes dataset with landmarks into form that can be passed into triplet
+    loss model. Must batch dataset before passing to model.
+
+    :param dataset: Dataset with shape (landmarks, label, subject_id)
+    :param train: If dataset is train dataset, set to True. Repeats and shuffles.
+    :return: Processed dataset with shape ((5,2), (5,2), (60, 30, 1), (60, 30, 1), 
+    (5,2), (5,2), (60, 30, 1), (60, 30, 1), (5,2), (5,2), (60, 30, 1), (60, 30, 1))"""
+
+    def map_norm_func(reye,leye,landmarks,target,id):
+        norm_landmarks = norm_facemesh(landmarks)
+        return (reye,leye,norm_landmarks,target,id)
+
+    cached = dataset.map(map_norm_func).cache()
+    if train:
+        grouped_dataset = group_dataset(
+            cached.repeat().shuffle(20000),
+            3).map(mp_and_img_triplet_map_combine_func)
+    else:
+        grouped_dataset = group_dataset(
+            cached, 3).map(mp_and_img_triplet_map_combine_func)
     return grouped_dataset
