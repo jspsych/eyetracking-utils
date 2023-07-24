@@ -1,8 +1,11 @@
 import tensorflow as tf
 import numpy as np
+import os
+import subprocess as sp
 from sklearn.metrics.pairwise import euclidean_distances
 
 from et_util import model_layers
+
 
 def get_corrcoef_array(model, test_data, map_function):
     """Predicts embedding values and calculates Pearson product-moment 
@@ -44,19 +47,20 @@ def get_corrcoef_array(model, test_data, map_function):
 
     return corrcoef_arr
 
+
 def get_embedding_data(
-    embedding_model,
-    triplet_train_data,
-    test_data,
-    test_data_map_function,
-    batched_triplet_validation_data=None,
-    embedding_layer_activation="tanh",
-    num_embedding_nodes=8,
-    margin=0.5,
-    optimizer=tf.keras.optimizers.Adam(),
-    num_epochs=1,
-    steps_per_epoch=100,
-    batch_size=100):
+        embedding_model,
+        triplet_train_data,
+        test_data,
+        test_data_map_function,
+        batched_triplet_validation_data=None,
+        embedding_layer_activation="tanh",
+        num_embedding_nodes=8,
+        margin=0.5,
+        optimizer=tf.keras.optimizers.Adam(),
+        num_epochs=1,
+        steps_per_epoch=100,
+        batch_size=100):
     """Trains mediapipe embedding model and outputs array of correlation coefficient
     values per subject. Make sure embedding model does not have an embedding layer.
     
@@ -73,7 +77,7 @@ def get_embedding_data(
     default tanh
     :param num_embedding_nodes: number of nodes in the embedding layer. 
     default 8.
-    :param margin: margine value to pass to siamese model
+    :param margin: margin value to pass to siamese model
     :param optimizer: optimizer with which training model is compiled.
     default Adam.
     :param num_epochs: number of epochs to train model. 
@@ -83,14 +87,14 @@ def get_embedding_data(
     :param batch_size: size of data batch. 
     default 100.
     :return: array of correlation coefficient values"""
- 
-    #give embedding layer desired number of nodes
+
+    # give embedding layer desired number of nodes
     last_layer = embedding_model.layers[-1].output
     embedding_layer = tf.keras.layers.Dense(units=num_embedding_nodes,
                                             activation=embedding_layer_activation)(last_layer)
     embedding_model = tf.keras.Model(inputs=embedding_model.input, outputs=embedding_layer)
 
-    #define triplet loss training model
+    # define triplet loss training model
     input_shape = embedding_model.layers[0].input_shape
     for dims in input_shape:
         input_shape = (dims[1:])
@@ -122,7 +126,7 @@ def get_embedding_data(
 
     embedding_model_siamese = model_layers.SiameseModel(embedding_model_train, margin=margin)
 
-    #compile and train
+    # compile and train
     embedding_model_siamese.compile(
         optimizer=optimizer
     )
@@ -136,3 +140,34 @@ def get_embedding_data(
     corrcoef_array = get_corrcoef_array(embedding_model, test_data, test_data_map_function)
 
     return corrcoef_array
+
+
+def mask_unused_gpus(leave_unmasked=1):
+    """
+    Masks all unused GPUs, except for the amount specified.
+    """
+
+    acceptable_available_memory = 1024
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+
+    try:
+        _output_to_list = lambda x: x.decode('ascii').split('\n')[:-1]
+        memory_free_info = _output_to_list(sp.check_output(command.split()))[1:]
+        memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+        available_gpus = [i for i, x in enumerate(memory_free_values)
+                          if x > acceptable_available_memory]
+
+        if len(available_gpus) < leave_unmasked:
+            raise ValueError(f'Found only {len(available_gpus)} usable GPUs in the system')
+        os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, available_gpus[:leave_unmasked]))
+    except Exception as exception:
+        print('"nvidia-smi" is probably not installed. GPUs are not masked', exception)
+
+
+def set_wandb_key(key: str):
+    """
+    Sets the API key to connect with the Weights and Biases server.
+    """
+
+    os.environ["WANDB_API_KEY"] = key
+    os.environ["WANDB_AGENT_DISABLE_FLAPPING"] = "true"
