@@ -206,7 +206,7 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
         right_eye_arr = getRightEye(image, lm_arr)
         right_eye_arr_gs = cv2.cvtColor(right_eye_arr, cv2.COLOR_BGR2GRAY)
         resized_right = cv2.resize(right_eye_arr_gs, (60, 30))
-    except:
+    except Exception:
         print("Error with eye extraction")
         return 'error'
 
