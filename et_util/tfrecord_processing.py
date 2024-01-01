@@ -198,13 +198,17 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
     landmarks = results.multi_face_landmarks[0].landmark
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
 
-    left_eye_arr = getLeftEye(image, lm_arr)
-    left_eye_arr_gs = cv2.cvtColor(left_eye_arr, cv2.COLOR_BGR2GRAY)
-    resized_left = cv2.resize(left_eye_arr_gs, (60, 30))
+    try:
+        left_eye_arr = getLeftEye(image, lm_arr)
+        left_eye_arr_gs = cv2.cvtColor(left_eye_arr, cv2.COLOR_BGR2GRAY)
+        resized_left = cv2.resize(left_eye_arr_gs, (60, 30))
 
-    right_eye_arr = getRightEye(image, lm_arr)
-    right_eye_arr_gs = cv2.cvtColor(right_eye_arr, cv2.COLOR_BGR2GRAY)
-    resized_right = cv2.resize(right_eye_arr_gs, (60, 30))
+        right_eye_arr = getRightEye(image, lm_arr)
+        right_eye_arr_gs = cv2.cvtColor(right_eye_arr, cv2.COLOR_BGR2GRAY)
+        resized_right = cv2.resize(right_eye_arr_gs, (60, 30))
+    except:
+        print("Error with eye extraction")
+        return 'error'
 
     left_eye = tf.io.serialize_tensor(resized_left)
     right_eye = tf.io.serialize_tensor(resized_right)
