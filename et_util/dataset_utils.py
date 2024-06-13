@@ -35,53 +35,61 @@ def process_json_to_tfds(in_path: str,
     val_size = int(size * val_split)
     test_size = int(size * test_split)
     train_size += (size - train_size - val_size - test_size)
-    assert ((train_size >= 1) and (val_size >= 1)) and (test_size >= 1)
+    
     if verbose:
         print(f'Training size: {train_size}')
         print(f'Validation size: {val_size}')
         print(f'Test size: {test_size}')
 
     # train partition
-    first_file = all_files.pop(0)
-    train_ds = process_one_file(in_path, first_file, process)
-    train_size -= 1
-    if verbose:
-        print("Training data:")
-        print(f'{first_file} processed')
-    for i in range(train_size):
-        file = all_files.pop(0)
-        train_ds = train_ds.concatenate(process_one_file(in_path, file, process))
+    if train_size > 0:
+        first_file = all_files.pop(0)
+        train_ds = process_one_file(in_path, first_file, process)
+        train_size -= 1
         if verbose:
-            print(f'{file} processed')
-
+            print("Training data:")
+            print(f'{first_file} processed')
+        for i in range(train_size):
+            file = all_files.pop(0)
+            train_ds = train_ds.concatenate(process_one_file(in_path, file, process))
+            if verbose:
+                print(f'{file} processed')
+    else:
+        train_ds = None
+    
     # val partition
-    first_file = all_files.pop(0)
-    val_ds = process_one_file(in_path, first_file, process)
-    val_size -= 1
-    if verbose:
-        print("Validation data:")
-        print(f'{first_file} processed')
-    for i in range(val_size):
-        file = all_files.pop(0)
-        val_ds = val_ds.concatenate(process_one_file(in_path, file, process))
+    if val_size > 0:
+        first_file = all_files.pop(0)
+        val_ds = process_one_file(in_path, first_file, process)
+        val_size -= 1
         if verbose:
-            print(f'{file} processed')
+            print("Validation data:")
+            print(f'{first_file} processed')
+        for i in range(val_size):
+            file = all_files.pop(0)
+            val_ds = val_ds.concatenate(process_one_file(in_path, file, process))
+            if verbose:
+                print(f'{file} processed')
+    else:
+        val_ds = None
 
     # test partition
-    first_file = all_files.pop(0)
-    test_ds = process_one_file(in_path, first_file, process)
-    test_size -= 1
-    if verbose:
-        print("Test data:")
-        print(f'{first_file} processed')
-    for i in range(test_size):
-        file = all_files.pop(0)
-        test_ds = test_ds.concatenate(process_one_file(in_path, file, process))
+    if test_size > 0:
+        first_file = all_files.pop(0)
+        test_ds = process_one_file(in_path, first_file, process)
+        test_size -= 1
         if verbose:
-            print(f'{file} processed')
+            print("Test data:")
+            print(f'{first_file} processed')
+        for i in range(test_size):
+            file = all_files.pop(0)
+            test_ds = test_ds.concatenate(process_one_file(in_path, file, process))
+            if verbose:
+                print(f'{file} processed')
+    else:
+        test_ds = None
 
     return train_ds, val_ds, test_ds
-
 
 def generate_single_ds(json_data):
     """
@@ -106,7 +114,6 @@ def generate_single_ds(json_data):
 
     return tf.data.Dataset.zip((input_ds, label_ds))
 
-
 def gen_everything_last_frame_gs(json_data):
     """
     Creates a tensorflow Dataset of the format {"images":, "landmarks":}, {"labels":}
@@ -130,7 +137,6 @@ def gen_everything_last_frame_gs(json_data):
         )
     )
 
-
 def gen_eye_data(json_data):
     """
     Creates a tensorflow Dataset of the format {"left":, "right":}, {"labels":}
@@ -152,7 +158,6 @@ def gen_eye_data(json_data):
             {"left": left, "right": right}, {"labels": labels}
         )
     )
-
 
 def process_one_file(in_path: str, file_name: str, process):
     """
@@ -197,39 +202,27 @@ def process_tfr_to_tfds(directory_path,
         dataset = dataset.filter(lambda *args: tf.math.reduce_all(tf.math.equal(tf.shape(args[0]), (640, 480, 3))))
         dataset = dataset.map(lambda *args: (tf.reshape(args[0], (640, 480, 3)),) + args[1:])
 
-    ds_size = 0
-    for _ in dataset:
-        ds_size += 1
+    dataset_grouped = dataset.group_by_window(
+            key_func= lambda le, re, m, c, z: z,
+            reduce_func= lambda key, dataset: dataset.batch(144),
+            window_size= 144
+        )
 
-    train_size = int(train_split * ds_size)
+    n_groups = 0
+    for _ in dataset_grouped.as_numpy_iterator():
+        n_groups += 1
 
-    val_size = int(val_split * ds_size)
+    train_size = int(train_split * n_groups)
+    val_size = int(val_split * n_groups)
 
-    train_ds_pre = dataset.take(train_size)
-    train_last_element = train_ds_pre.skip(train_size-1)
-    train_last_id = get_subject_id(train_last_element)
+    train_grouped_ds = dataset_grouped.take(train_size)
+    val_grouped_ds = dataset_grouped.skip(train_size).take(val_size)
+    test_grouped_ds = dataset_grouped.skip(train_size).skip(val_size)
 
-    for element in dataset.skip(train_size):
-        id = element[-1]
-        if (id == train_last_id):
-            train_size += 1
-        else: break
-
-    train_ds = dataset.take(train_size)
-
-    val_ds_pre = dataset.skip(train_size).take(val_size)
-    val_last_element = val_ds_pre.skip(val_size-1)
-    val_last_id = get_subject_id(val_last_element)
-
-    for element in dataset.skip(train_size).skip(val_size):
-        id = element[-1]
-        if (id == val_last_id):
-            val_size += 1
-        else: break
-
-    val_ds = dataset.skip(train_size)
-
-    test_ds = dataset.skip(train_size).skip(val_size)
+    # Ungroup the datasets
+    train_ds = train_grouped_ds.unbatch()
+    val_ds = val_grouped_ds.unbatch()
+    test_ds = test_grouped_ds.unbatch()
 
     return train_ds, val_ds, test_ds
 
