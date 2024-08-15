@@ -247,6 +247,9 @@ def make_single_example_landmarks_and_joint_eyes(image_path, face_mesh):
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
 
     eyes_arr = getBothEyesAsSingleImage(image, lm_arr)
+    if 0 in eyes_arr.shape:
+        print("Cannot get eyes")
+        return 'error'
     eyes_gs = cv2.cvtColor(eyes_arr, cv2.COLOR_BGR2GRAY)
     resized_eyes = cv2.resize(eyes_gs, (144, 36))
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
