@@ -35,6 +35,29 @@ def getRightEye(image, landmarks):
     right_eye = image[eye_top:eye_bottom, eye_left:eye_right]
     return right_eye
 
+def getBothEyesAsSingleImage(image, landmarks, padding=0.01):
+
+    left_edge = int((landmarks[226][0] - padding) * image.shape[1])
+    right_edge = int((landmarks[446][0] + padding) * image.shape[1])
+    
+    left_top = int((landmarks[27][1] - padding) * image.shape[0])
+    left_bottom = int((landmarks[23][1] + padding) * image.shape[0])
+
+    right_top = int((landmarks[257][1] - padding) * image.shape[0])
+    right_bottom = int((landmarks[253][1] + padding) * image.shape[0])
+
+    if(left_top > right_top):
+        top = right_top
+    else:
+        top = left_top
+    
+    if(left_bottom < right_bottom):
+        bottom = right_bottom
+    else:
+        bottom = left_bottom
+
+    both_eyes = image[top:bottom, left_edge:right_edge]
+    return both_eyes
 
 def extract_eyes(json_path: str, webm_path: str):
     """

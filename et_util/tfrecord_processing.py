@@ -4,7 +4,7 @@ import tensorflow as tf
 import cv2
 import mediapipe as mp
 
-from et_util.process_functions import getRightEye, getLeftEye
+from et_util.process_functions import getRightEye, getLeftEye, getBothEyesAsSingleImage
 
 
 def process_jpg_to_tfr(
@@ -229,6 +229,35 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
         'left_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[left_eye.numpy()])),
         'right_eye': tf.train.Feature(bytes_list=tf.train.BytesList(value=[right_eye.numpy()]))
     }
+    return feature_description
+
+def make_single_example_landmarks_and_joint_eyes(image_path, face_mesh):
+
+    image = cv2.imread(image_path)
+
+    results = face_mesh.process(image)
+
+    landmarks = results.multi_face_landmarks[0].landmark
+    lm_arr = [[l.x, l.y, l.z] for l in landmarks]
+
+    eyes_arr = getBothEyesAsSingleImage(image, lm_arr)
+    eyes_gs = cv2.cvtColor(eyes_arr, cv2.COLOR_BGR2GRAY)
+    resized_eyes = cv2.resize(eyes_gs, (144, 36))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    recolored_eyes = clahe.apply(resized_eyes)
+
+    eyes = tf.io.serialize_tensor(recolored_eyes)
+
+    lm_arr = tf.io.serialize_tensor(lm_arr)
+
+    # Feature description of image to use when parsing
+    feature_description = {
+        'landmarks': tf.train.Feature(bytes_list=tf.train.BytesList(value=[lm_arr.numpy()])),
+        'img_width': tf.train.Feature(int64_list=tf.train.Int64List(value=[144])),
+        'img_height': tf.train.Feature(int64_list=tf.train.Int64List(value=[36])),
+        'eye_img': tf.train.Feature(bytes_list=tf.train.BytesList(value=[eyes.numpy()]))
+    }
+
     return feature_description
 
 def remove_subject_tfrecords(directory, subject_ids):
