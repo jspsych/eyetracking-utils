@@ -234,8 +234,14 @@ def make_single_example_landmarks_and_eyes(image_path, face_mesh):
 def make_single_example_landmarks_and_joint_eyes(image_path, face_mesh):
 
     image = cv2.imread(image_path)
+    if image is None:
+        print("Cannot read image")
+        return 'error'
 
     results = face_mesh.process(image)
+    if not results.multi_face_landmarks:
+        print("Cannot make mesh")
+        return 'error'
 
     landmarks = results.multi_face_landmarks[0].landmark
     lm_arr = [[l.x, l.y, l.z] for l in landmarks]
