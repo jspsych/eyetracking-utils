@@ -415,6 +415,6 @@ def parse_tfr_element_single_eye_image_and_mediapipe(element):
     landmarks = tf.reshape(landmarks, shape=(478, 3))
 
     image = tf.io.decode_jpeg(raw_image)
-    image = tf.reshape(image, shape=(width, height, depth))
+    image = tf.reshape(image, shape=(height, width, depth))
 
     return image, landmarks, label, subject_id
