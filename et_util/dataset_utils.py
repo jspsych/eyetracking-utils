@@ -181,6 +181,7 @@ def process_tfr_to_tfds(directory_path,
                         train_split=0.8,
                         val_split=0.1,
                         test_split=0.1,
+                        random_seed=None,
                         group_function=lambda le, re, m, c, z: z):
     """
     Creates a parsed tensorflow dataset from a directory of tfrecords
@@ -216,9 +217,11 @@ def process_tfr_to_tfds(directory_path,
     train_size = int(train_split * n_groups)
     val_size = int(val_split * n_groups)
 
-    train_grouped_ds = dataset_grouped.take(train_size)
-    val_grouped_ds = dataset_grouped.skip(train_size).take(val_size)
-    test_grouped_ds = dataset_grouped.skip(train_size).skip(val_size)
+    shuffled_dataset = dataset_grouped.shuffle(n_groups, seed=random_seed)
+
+    train_grouped_ds = shuffled_dataset.take(train_size)
+    val_grouped_ds = shuffled_dataset.skip(train_size).take(val_size)
+    test_grouped_ds = shuffled_dataset.skip(train_size).skip(val_size)
 
     # Ungroup the datasets
     train_ds = train_grouped_ds.unbatch()
