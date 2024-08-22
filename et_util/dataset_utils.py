@@ -217,7 +217,7 @@ def process_tfr_to_tfds(directory_path,
     train_size = int(train_split * n_groups)
     val_size = int(val_split * n_groups)
 
-    shuffled_dataset = dataset_grouped.shuffle(n_groups, seed=random_seed)
+    shuffled_dataset = dataset_grouped.shuffle(n_groups, seed=random_seed, reshuffle_each_iteration=False)
 
     train_grouped_ds = shuffled_dataset.take(train_size)
     val_grouped_ds = shuffled_dataset.skip(train_size).take(val_size)
