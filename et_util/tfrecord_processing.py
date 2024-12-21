@@ -48,14 +48,22 @@ def process_jpg_to_tfr(
                 image_path = os.path.join(in_path, fname)
 
                 subject_id = finfo[0]
-                x, y = finfo[1], finfo[2]
-
-                tag = {
-                    'subject_id': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(subject_id, 36)])),
-                    'x': tf.train.Feature(float_list=tf.train.FloatList(value=[float(x)])),
-                    'y': tf.train.Feature(float_list=tf.train.FloatList(value=[float(y)]))
-                }
-
+                if len(finfo) == 3:
+                    x, y = finfo[1], finfo[2]
+                    tag = {
+                        'subject_id': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(subject_id, 36)])),
+                        'x': tf.train.Feature(float_list=tf.train.FloatList(value=[float(x)])),
+                        'y': tf.train.Feature(float_list=tf.train.FloatList(value=[float(y)]))
+                    }
+                else:
+                    phase, x, y = finfo[1], finfo[2], finfo[3]
+                    tag = {
+                        'subject_id': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(subject_id, 36)])),
+                        'x': tf.train.Feature(float_list=tf.train.FloatList(value=[float(x)])),
+                        'y': tf.train.Feature(float_list=tf.train.FloatList(value=[float(y)])),
+                        'phase': tf.train.Feature(int64_list=tf.train.Int64List(value=[int(phase)]))
+                    }
+                
                 data = process(image_path, face_mesh)
                 if 'error' in data:
                     error = True
