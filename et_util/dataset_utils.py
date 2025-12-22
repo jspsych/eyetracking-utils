@@ -421,3 +421,75 @@ def parse_tfr_element_single_eye_image_and_mediapipe(element):
     image = tf.reshape(image, shape=(height, width, depth))
 
     return image, landmarks, label, subject_id
+
+
+def parse_single_eye_tfrecord(element):
+    """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
+    Gets raw image, subject id, and xy labels.
+    Use for data generated with eye image TFRecords (single_eye_tfrecords) - training data without phase.
+
+    :param element: tfr element in raw dataset
+    :return: image, label(x,y), subject_id
+    """
+
+    data_structure = {
+        'landmarks': tf.io.FixedLenFeature([], tf.string),
+        'img_width': tf.io.FixedLenFeature([], tf.int64),
+        'img_height': tf.io.FixedLenFeature([], tf.int64),
+        'x': tf.io.FixedLenFeature([], tf.float32),
+        'y': tf.io.FixedLenFeature([], tf.float32),
+        'eye_img': tf.io.FixedLenFeature([], tf.string),
+        'subject_id': tf.io.FixedLenFeature([], tf.int64),
+    }
+
+    content = tf.io.parse_single_example(element, data_structure)
+
+    raw_image = content['eye_img']
+    label = [content['x'], content['y']]
+    subject_id = content['subject_id']
+
+    image = tf.io.parse_tensor(raw_image, out_type=tf.uint8)
+
+    return image, label, subject_id
+
+
+def parse_single_eye_tfrecord_with_phase(element):
+    """Process function that parses a tfr element in a raw dataset for process_tfr_to_tfds function.
+    Gets raw image, phase, subject id, and xy labels.
+    Use for data generated with eye image TFRecords that include phase information (test/analysis data).
+
+    :param element: tfr element in raw dataset
+    :return: image, phase, label(x,y), subject_id
+    """
+
+    data_structure = {
+        'landmarks': tf.io.FixedLenFeature([], tf.string),
+        'img_width': tf.io.FixedLenFeature([], tf.int64),
+        'img_height': tf.io.FixedLenFeature([], tf.int64),
+        'x': tf.io.FixedLenFeature([], tf.float32),
+        'y': tf.io.FixedLenFeature([], tf.float32),
+        'eye_img': tf.io.FixedLenFeature([], tf.string),
+        'subject_id': tf.io.FixedLenFeature([], tf.int64),
+        'phase': tf.io.FixedLenFeature([], tf.int64),
+    }
+
+    content = tf.io.parse_single_example(element, data_structure)
+
+    raw_image = content['eye_img']
+    label = [content['x'], content['y']]
+    subject_id = content['subject_id']
+    phase = content['phase']
+
+    image = tf.io.parse_tensor(raw_image, out_type=tf.uint8)
+
+    return image, phase, label, subject_id
+
+
+def rescale_coords_map(eyes, coords, id):
+    """Rescale coordinates from 0-100 range to 0-1 range (for training data without phase)"""
+    return eyes, coords / 100.0, id
+
+
+def rescale_coords_map_with_phase(eyes, phase, coords, id):
+    """Rescale coordinates from 0-100 range to 0-1 range (for test/analysis data with phase)"""
+    return eyes, phase, coords / 100.0, id
