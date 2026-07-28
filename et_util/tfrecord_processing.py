@@ -10,7 +10,7 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 
 # Note: Ensure this module is available in your workspace
-from process_functions import getRightEye, getLeftEye, getBothEyesAsSingleImage
+from et_util.process_functions import getRightEye, getLeftEye, getBothEyesAsSingleImage
 
 
 def process_jpg_to_tfr(
